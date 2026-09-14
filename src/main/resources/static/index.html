@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACME Order Hub</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="top-bar">
+    <span class="acme-logo">ACME</span>
+    <span class="lightwell-credit">Dependency remediation powered by <a href="https://www.redhat.com/en/technologies/cloud/lightwell-network" rel="noopener noreferrer">Red Hat Lightwell Network</a></span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>ACME Order Hub</h1>
+      <p class="tagline">Pinned dependencies, production-stable — surgical fixes without major upgrades.</p>
+    </section>
+
+    <section id="build-banner" class="build-banner" aria-live="polite">
+      <span class="banner-label">Loading deployment…</span>
+    </section>
+
+    <section class="actions-row">
+      <button type="button" id="walkthrough-btn" class="btn btn-secondary">▶ Simulated walkthrough</button>
+      <p class="sim-disclaimer">Simulation shows typical before/after; live deployment data is in the banner above.</p>
+    </section>
+
+    <section id="deps" class="card-grid" aria-label="Dependencies"></section>
+
+    <section class="card" id="cve-section">
+      <h2>Security posture</h2>
+      <p class="hint">Representative CVEs for demo storytelling — not a live scanner.</p>
+      <div id="cve-list" class="cve-list"></div>
+    </section>
+
+    <section class="card" id="playground">
+      <h2>Live playground</h2>
+      <form id="order-form">
+        <label>Customer name <input name="customerName" value="Jane Doe" required></label>
+        <label>Order ID <input name="orderId" value="ACME-1001" required></label>
+        <label>Note <input name="note" placeholder="Optional"></label>
+        <button type="submit" class="btn btn-primary">Submit order</button>
+      </form>
+      <pre id="order-result" class="result" hidden></pre>
+    </section>
+
+    <section class="card what-changed">
+      <h2>What Lightwell changes</h2>
+      <p>Only dependency configuration — no application code changes.</p>
+      <pre class="diff"><code>&lt;!-- pom.xml profile lightwell --&gt;
+&lt;spring-framework.version&gt;5.3.18&lt;/spring-framework.version&gt;
+  → 5.3.18.rhlw-00010
+
+&lt;!-- settings.xml (one-time) --&gt;
++ https://packages.redhat.com/lightwell/java/remediated/
+  (or local mock-repo for offline demos)</code></pre>
+      <p>See <code>README.md</code> for full build and Ansible flows.</p>
+    </section>
+  </main>
+
+  <div id="walkthrough-overlay" class="overlay hidden" role="dialog" aria-labelledby="wt-title">
+    <div class="overlay-panel">
+      <h2 id="wt-title">Simulated walkthrough</h2>
+      <p id="wt-step-text"></p>
+      <div id="wt-visual" class="wt-visual"></div>
+      <div class="overlay-actions">
+        <button type="button" id="wt-skip" class="btn btn-secondary">Skip</button>
+        <button type="button" id="wt-next" class="btn btn-primary">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>ACME Corp internal demo · Project Lightwell surgical backports</p>
+  </footer>
+  <script src="/js/app.js"></script>
+</body>
+</html>

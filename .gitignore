@@ -1,0 +1,11 @@
+target/
+mock-repo/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.DS_Store
+maven/settings-lightwell.xml
+artifacts/
+!.mvn/wrapper/maven-wrapper.jar

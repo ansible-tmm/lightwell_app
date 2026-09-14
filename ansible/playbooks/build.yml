@@ -1,0 +1,6 @@
+---
+- name: Build ACME Order Hub JAR on build host
+  hosts: build
+  gather_facts: true
+  roles:
+    - role: build_host

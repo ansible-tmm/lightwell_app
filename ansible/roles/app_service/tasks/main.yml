@@ -1,0 +1,94 @@
+---
+- name: Install Java runtime
+  ansible.builtin.dnf:
+    name: java-11-openjdk-headless
+    state: present
+
+- name: Create application group
+  ansible.builtin.group:
+    name: "{{ app_user }}"
+    state: present
+
+- name: Create application user
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_user }}"
+    system: true
+
+- name: Ensure install directory exists
+  ansible.builtin.file:
+    path: "{{ app_install_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Find JAR on controller
+  ansible.builtin.find:
+    paths: "{{ controller_artifacts_dir }}"
+    patterns: "lightwell-app-*.jar"
+    excludes: "*-original.jar"
+  delegate_to: localhost
+  become: false
+  register: local_jar
+  when: jar_source == 'controller'
+
+- name: Copy JAR from controller to app host
+  ansible.builtin.copy:
+    src: "{{ local_jar.files[0].path }}"
+    dest: "{{ app_jar_dest }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  when:
+    - jar_source == 'controller'
+    - local_jar.matched > 0
+
+- name: Slurp JAR from build host when jar_source is build_host
+  ansible.builtin.slurp:
+    src: "{{ hostvars[groups['build'][0]]['built_jar_path'] }}"
+  delegate_to: "{{ groups['build'][0] }}"
+  register: jar_slurp
+  when:
+    - jar_source == 'build_host'
+    - groups['build'] | length > 0
+
+- name: Write JAR on app host from build host
+  ansible.builtin.copy:
+    content: "{{ jar_slurp.content | b64decode }}"
+    dest: "{{ app_jar_dest }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  when: jar_source == 'build_host'
+
+- name: Install systemd unit
+  ansible.builtin.template:
+    src: acme-order-hub.service.j2
+    dest: /etc/systemd/system/acme-order-hub.service
+    mode: "0644"
+  notify: Restart acme order hub
+
+- name: Enable and start service
+  ansible.builtin.systemd:
+    name: acme-order-hub
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Open application port in firewalld
+  ansible.posix.firewalld:
+    port: "{{ app_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  when: "'firewalld.service' in ansible_facts.services"
+
+- name: Wait for health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ app_port }}/health"
+    return_content: true
+  register: health
+  until: health.status == 200
+  retries: 12
+  delay: 5

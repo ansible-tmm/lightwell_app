@@ -1,0 +1,6 @@
+---
+- name: Deploy ACME Order Hub JAR to app host
+  hosts: app
+  gather_facts: true
+  roles:
+    - role: app_service

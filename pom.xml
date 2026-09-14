@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.18</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.acme</groupId>
+    <artifactId>lightwell-app</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>ACME Order Hub (Lightwell demo)</name>
+    <description>Demo webapp illustrating Red Hat Lightwell surgical backports for pinned Spring Framework versions.</description>
+
+    <properties>
+        <java.version>11</java.version>
+        <jackson.version>2.13.4.2</jackson.version>
+        <commons-text.version>1.9</commons-text.version>
+        <!-- Overridden per Maven profile (community vs lightwell) -->
+        <spring-framework.version>5.3.18</spring-framework.version>
+        <lightwell.build.profile>community</lightwell.build.profile>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${commons-text.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>community</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spring-framework.version>5.3.18</spring-framework.version>
+                <lightwell.build.profile>community</lightwell.build.profile>
+            </properties>
+        </profile>
+        <profile>
+            <id>lightwell</id>
+            <properties>
+                <spring-framework.version>5.3.18.rhlw-00010</spring-framework.version>
+                <lightwell.build.profile>lightwell-remediated</lightwell.build.profile>
+            </properties>
+            <repositories>
+                <repository>
+                    <id>lightwell-mock</id>
+                    <name>Mock Lightwell remediated (local)</name>
+                    <url>file://${project.basedir}/mock-repo</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>application.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>application.properties</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

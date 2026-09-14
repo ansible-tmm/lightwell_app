@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <servers>
+    <server>
+      <id>lightwell-remediated</id>
+      <username>{{ lightwell_maven_user }}</username>
+      <password>{{ lightwell_maven_token }}</password>
+    </server>
+  </servers>
+  <profiles>
+    <profile>
+      <id>lightwell-remediated</id>
+      <repositories>
+        <repository>
+          <id>lightwell-remediated</id>
+          <url>https://packages.redhat.com/lightwell/java/remediated/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>central</id>
+          <url>https://repo.maven.apache.org/maven2</url>
+          <releases><enabled>true</enabled></releases>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>lightwell-remediated</activeProfile>
+  </activeProfiles>
+</settings>

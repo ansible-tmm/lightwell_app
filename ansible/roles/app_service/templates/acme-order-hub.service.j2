@@ -1,0 +1,16 @@
+[Unit]
+Description=ACME Order Hub (Lightwell demo)
+After=network.target
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_user }}
+WorkingDirectory={{ app_install_dir }}
+ExecStart=/usr/bin/java -jar {{ app_jar_dest }}
+Environment=SERVER_PORT={{ app_port }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

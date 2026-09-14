@@ -1,0 +1,38 @@
+---
+- name: Validate EC2 parameters
+  ansible.builtin.assert:
+    that:
+      - ec2_key_name | length > 0
+      - ec2_subnet_id | length > 0
+    fail_msg: "Set ec2_key_name and ec2_subnet_id (-e) for EC2 provisioning"
+
+- name: Find latest RHEL 9 AMI
+  amazon.aws.ec2_ami_info:
+    region: "{{ ec2_region }}"
+    owners: "{{ ec2_ami_owner }}"
+    filters:
+      name: "{{ ec2_ami_name }}"
+      architecture: x86_64
+  register: ami_info
+
+- name: Launch build instance
+  amazon.aws.ec2_instance:
+    name: "{{ ec2_instance_name }}"
+    key_name: "{{ ec2_key_name }}"
+    vpc_subnet_id: "{{ ec2_subnet_id }}"
+    instance_type: "{{ ec2_instance_type }}"
+    image_id: "{{ (ami_info.images | sort(attribute='creation_date') | last).image_id }}"
+    network:
+      assign_public_ip: "{{ ec2_assign_public_ip }}"
+    tags:
+      Project: lightwell-demo
+      Role: build
+    wait: true
+    state: present
+  register: ec2
+
+- name: Show instance connection hint
+  ansible.builtin.debug:
+    msg: >-
+      Builder launched: {{ ec2.instances[0].public_ip_address | default(ec2.instances[0].private_ip_address) }}.
+      Add to inventory under build group with ansible_user=ec2-user.

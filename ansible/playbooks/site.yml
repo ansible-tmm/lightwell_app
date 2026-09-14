@@ -1,0 +1,10 @@
+---
+- name: Build artifact
+  ansible.builtin.import_playbook: build.yml
+  tags:
+    - build
+
+- name: Deploy application
+  ansible.builtin.import_playbook: deploy.yml
+  tags:
+    - deploy

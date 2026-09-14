@@ -1,0 +1,11 @@
+---
+# Optional: launch a RHEL builder EC2 instance. Requires AWS credentials and amazon.aws collection.
+# ansible-playbook playbooks/provision_build_ec2.yml -e ec2_key_name=my-key -e ec2_subnet_id=subnet-xxx
+- name: Provision build EC2 instance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: ec2_instance
+  tags:
+    - provision

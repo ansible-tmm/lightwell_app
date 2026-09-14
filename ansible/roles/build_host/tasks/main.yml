@@ -1,0 +1,114 @@
+---
+- name: Install build packages
+  ansible.builtin.dnf:
+    name:
+      - java-11-openjdk-devel
+      - git
+      - python3
+    state: present
+
+- name: Create application group
+  ansible.builtin.group:
+    name: "{{ app_user }}"
+    state: present
+
+- name: Create application user
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_user }}"
+    home: "{{ app_install_dir }}"
+    create_home: false
+    system: true
+
+- name: Ensure install directory exists
+  ansible.builtin.file:
+    path: "{{ app_install_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Clone application repository
+  ansible.builtin.git:
+    repo: "{{ lightwell_app_repo }}"
+    dest: "{{ app_root }}"
+    version: "{{ lightwell_app_version }}"
+    force: true
+  become: true
+  become_user: "{{ app_user }}"
+  when: deploy_from_git | bool
+
+- name: Sync application source from controller
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../../"
+    dest: "{{ app_root }}/"
+    delete: false
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=target"
+      - "--exclude=mock-repo"
+      - "--exclude=artifacts"
+  when: not (deploy_from_git | bool)
+
+- name: Fix ownership after sync
+  ansible.builtin.file:
+    path: "{{ app_root }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    recurse: true
+
+- name: Template real Lightwell Maven settings
+  ansible.builtin.template:
+    src: settings-lightwell.xml.j2
+    dest: "{{ app_root }}/maven/settings-lightwell.xml"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0600"
+  when: use_real_lightwell | bool
+  no_log: true
+
+- name: Build mock Lightwell Maven repository
+  ansible.builtin.command:
+    cmd: "{{ app_root }}/scripts/build-mock-lightwell-repo.sh"
+    chdir: "{{ app_root }}"
+  become: true
+  become_user: "{{ app_user }}"
+  when: build_mock_lightwell_repo | bool
+
+- name: Run Maven package
+  ansible.builtin.command:
+    cmd: >-
+      {{ app_root }}/mvnw -P{{ maven_profile }}
+      -s {{ maven_settings_file }}
+      -DskipTests package
+    chdir: "{{ app_root }}"
+  become: true
+  become_user: "{{ app_user }}"
+  environment:
+    JAVA_HOME: "{{ ansible_facts['java_home'] | default('/usr/lib/jvm/java-11-openjdk') }}"
+  register: mvn_build
+  changed_when: true
+
+- name: Find built JAR
+  ansible.builtin.find:
+    paths: "{{ app_root }}/target"
+    patterns: "lightwell-app-*.jar"
+    excludes: "*-sources.jar,*-javadoc.jar,*-original.jar"
+  register: jar_find
+
+- name: Set built JAR path fact
+  ansible.builtin.set_fact:
+    built_jar_path: "{{ jar_find.files | map(attribute='path') | list | first }}"
+  when: jar_find.matched > 0
+
+- name: Fail when JAR missing
+  ansible.builtin.fail:
+    msg: "No lightwell-app JAR found under {{ app_root }}/target"
+  when: jar_find.matched == 0
+
+- name: Fetch JAR to controller artifacts directory
+  ansible.builtin.fetch:
+    src: "{{ built_jar_path }}"
+    dest: "{{ controller_artifacts_dir }}/"
+    flat: true
+  when: fetch_artifact_to_controller | bool

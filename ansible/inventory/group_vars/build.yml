@@ -1,0 +1,4 @@
+---
+# Override for Lightwell mock build:
+# maven_profile: lightwell
+# build_mock_lightwell_repo: true

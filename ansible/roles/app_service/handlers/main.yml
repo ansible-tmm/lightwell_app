@@ -1,0 +1,6 @@
+---
+- name: Restart acme order hub
+  ansible.builtin.systemd:
+    name: acme-order-hub
+    state: restarted
+    daemon_reload: true
