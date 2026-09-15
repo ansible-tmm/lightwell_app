@@ -2,16 +2,23 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
-  <!-- DEPRECATED: use settings-nexus.xml and Nexus hosted repo instead.
-       Legacy: ./mvnw -Plightwell -s maven/settings-mock.xml package (requires pom file:// repo) -->
+  <!-- Copy to settings-nexus.xml and set Nexus URL + credentials.
+       Provision repos with: ansible-playbook playbooks/provision_nexus.yml -->
+  <servers>
+    <server>
+      <id>nexus</id>
+      <username>admin</username>
+      <password>CHANGE_ME</password>
+    </server>
+  </servers>
   <profiles>
     <profile>
-      <id>lightwell-mock</id>
+      <id>nexus</id>
       <repositories>
         <repository>
-          <id>lightwell-mock</id>
-          <name>Mock Lightwell remediated (file repo)</name>
-          <url>file://${user.dir}/mock-repo</url>
+          <id>nexus-public</id>
+          <name>Nexus maven-public group</name>
+          <url>http://localhost:8081/repository/maven-public/</url>
           <releases>
             <enabled>true</enabled>
           </releases>
@@ -19,23 +26,19 @@
             <enabled>false</enabled>
           </snapshots>
         </repository>
-        <repository>
-          <id>central</id>
-          <url>https://repo.maven.apache.org/maven2</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-        </repository>
       </repositories>
       <pluginRepositories>
         <pluginRepository>
-          <id>central</id>
-          <url>https://repo.maven.apache.org/maven2</url>
+          <id>nexus-public</id>
+          <url>http://localhost:8081/repository/maven-public/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
         </pluginRepository>
       </pluginRepositories>
     </profile>
   </profiles>
   <activeProfiles>
-    <activeProfile>lightwell-mock</activeProfile>
+    <activeProfile>nexus</activeProfile>
   </activeProfiles>
 </settings>

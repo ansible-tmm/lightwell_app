@@ -2,6 +2,11 @@
 # Copy to hosts.yml and set ansible_host / SSH user for your environment.
 all:
   children:
+    nexus:
+      hosts:
+        lightwell-nexus:
+          ansible_host: 10.0.1.49
+          ansible_user: ec2-user
     build:
       hosts:
         lightwell-builder:

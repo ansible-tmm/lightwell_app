@@ -1,4 +1,3 @@
 ---
-# Override for Lightwell mock build:
+# Lightwell build via Nexus (after provision_nexus + mock upload):
 # maven_profile: lightwell
-# build_mock_lightwell_repo: true

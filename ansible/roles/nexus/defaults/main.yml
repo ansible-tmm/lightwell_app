@@ -1,0 +1,26 @@
+---
+nexus_container_name: nexus
+nexus_container_image: docker.io/sonatype/nexus3:3.68.1
+nexus_http_port: 8081
+nexus_data_dir: /opt/nexus-data
+nexus_base_url: "http://{{ ansible_host | default('localhost') }}:{{ nexus_http_port }}"
+
+nexus_repo_maven_central: maven-central
+nexus_repo_lightwell_mock: lightwell-java-remediated-mock
+nexus_repo_lightwell_proxy: lightwell-java-remediated
+nexus_repo_maven_public: maven-public
+
+lightwell_remote_url: https://packages.redhat.com/lightwell/java/remediated/
+configure_lightwell_proxy: false
+
+nexus_admin_user: admin
+# nexus_admin_password: set in vault
+# lightwell_maven_user / lightwell_maven_token: vault, for proxy remote auth when configure_lightwell_proxy
+
+upload_mock_artifacts_to_nexus: true
+stage_mock_on_nexus_host: true
+
+lightwell_app_repo: "https://github.com/ansible-tmm/lightwell_app.git"
+lightwell_app_version: main
+app_root: /opt/acme/lightwell_app
+deploy_from_git: true

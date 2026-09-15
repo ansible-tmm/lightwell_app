@@ -5,6 +5,7 @@
       - java-11-openjdk-devel
       - git
       - python3
+      - curl
     state: present
 
 - name: Create application group
@@ -57,30 +58,34 @@
     group: "{{ app_user }}"
     recurse: true
 
-- name: Template real Lightwell Maven settings
+- name: Template Nexus Maven settings for build host
+  ansible.builtin.template:
+    src: settings-nexus.xml.j2
+    dest: "{{ app_root }}/maven/settings-nexus.xml"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0600"
+  when: use_nexus | bool
+  no_log: true
+
+- name: Template direct Lightwell Maven settings (no Nexus)
   ansible.builtin.template:
     src: settings-lightwell.xml.j2
     dest: "{{ app_root }}/maven/settings-lightwell.xml"
     owner: "{{ app_user }}"
     group: "{{ app_user }}"
     mode: "0600"
-  when: use_real_lightwell | bool
+  when:
+    - use_real_lightwell | bool
+    - not (use_nexus | bool)
   no_log: true
-
-- name: Build mock Lightwell Maven repository
-  ansible.builtin.command:
-    cmd: "{{ app_root }}/scripts/build-mock-lightwell-repo.sh"
-    chdir: "{{ app_root }}"
-  become: true
-  become_user: "{{ app_user }}"
-  when: build_mock_lightwell_repo | bool
 
 - name: Run Maven package
   ansible.builtin.command:
     cmd: >-
       {{ app_root }}/mvnw -P{{ maven_profile }}
       -s {{ maven_settings_file }}
-      -DskipTests package
+      -DskipTests -U package
     chdir: "{{ app_root }}"
   become: true
   become_user: "{{ app_user }}"

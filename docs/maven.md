@@ -2,64 +2,36 @@
 
 ## Prerequisites
 
-- **JDK 11** (`java-11-openjdk-devel` on RHEL)
-- **Maven 3.8+** or use **`./mvnw`** from this repository
+- **JDK 11**
+- **Maven Wrapper** (`./mvnw`)
+- **Nexus** reachable — see [nexus.md](nexus.md)
 
-## Environment
+## Settings
 
-```bash
-# macOS
-export JAVA_HOME=$(/usr/libexec/java-home -v 11)
+Primary: **`maven/settings-nexus.xml`** (from `settings-nexus.xml.example`).
 
-# RHEL / Fedora
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-```
+Fallback (no Nexus): **`maven/settings-lightwell.xml`** from example for direct `packages.redhat.com` access.
 
-## Build profiles
+## Profiles
 
-| Profile | Spring version | Repository |
+| Profile | Spring version | Resolution |
 |---------|----------------|------------|
-| `community` (default) | `5.3.18` | Maven Central |
-| `lightwell` | `5.3.18.rhlw-00010` | `mock-repo/` (local) or real Lightwell remediated URL |
+| `community` | `5.3.18` | Nexus → `maven-central` proxy |
+| `lightwell` | `5.3.18.rhlw-00010` | Nexus → `lightwell-java-remediated-mock` (or RH proxy) |
 
-### Community (before)
+Repositories are **not** declared in `pom.xml` for `lightwell`; Nexus URLs live in `settings-nexus.xml`.
+
+## Commands
 
 ```bash
-./mvnw -Pcommunity package
-java -jar target/lightwell-app-*.jar
+./mvnw -Pcommunity -s maven/settings-nexus.xml package
+./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package
 ```
 
-### Lightwell mock (after, offline)
+## Ansible build
 
 ```bash
-./scripts/build-mock-lightwell-repo.sh
-./mvnw -Plightwell -s maven/settings-mock.xml package
-java -jar target/lightwell-app-*.jar
-```
-
-### Real Lightwell remediated repository
-
-1. Copy `maven/settings-lightwell.xml.example` to `maven/settings-lightwell.xml` (gitignored).
-2. Set service account username and token from [console.redhat.com](https://console.redhat.com).
-3. Build:
-
-```bash
-./mvnw -Plightwell -s maven/settings-lightwell.xml package
-```
-
-## Demo CVE script
-
-```bash
-./scripts/cve-status.sh community
-./scripts/cve-status.sh lightwell
-```
-
-## Canonical Ansible build command
-
-```bash
-cd /opt/acme/lightwell_app
-./scripts/build-mock-lightwell-repo.sh   # when build_mock_lightwell_repo=true
-./mvnw -P"${maven_profile}" -s "${maven_settings_file}" -DskipTests package
+./mvnw -P{{ maven_profile }} -s {{ app_root }}/maven/settings-nexus.xml -DskipTests -U package
 ```
 
 Artifact: `target/lightwell-app-1.0.0-SNAPSHOT.jar`

@@ -1,0 +1,235 @@
+---
+- name: Install podman
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - curl
+    state: present
+
+- name: Ensure Nexus data directory exists
+  ansible.builtin.file:
+    path: "{{ nexus_data_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Run Nexus container
+  ansible.builtin.command:
+    cmd: >-
+      podman run -d --name {{ nexus_container_name }}
+      --restart=unless-stopped
+      -p {{ nexus_http_port }}:8081
+      -v {{ nexus_data_dir }}:/nexus-data:Z
+      {{ nexus_container_image }}
+  register: nexus_run
+  changed_when: nexus_run.rc == 0
+  failed_when: nexus_run.rc != 0 and 'already in use' not in nexus_run.stderr
+  args:
+    creates: "{{ nexus_data_dir }}/db"
+
+- name: Start existing Nexus container if stopped
+  ansible.builtin.command:
+    cmd: podman start {{ nexus_container_name }}
+  register: nexus_start
+  changed_when: nexus_start.rc == 0
+  failed_when: false
+
+- name: Wait for Nexus to become writable
+  ansible.builtin.uri:
+    url: "{{ nexus_base_url }}/service/rest/v1/status/writable"
+    status_code: 200
+  register: nexus_writable
+  until: nexus_writable.status == 200
+  retries: 36
+  delay: 10
+
+- name: Read initial Nexus admin password from container
+  ansible.builtin.command:
+    cmd: podman exec {{ nexus_container_name }} cat /nexus-data/admin.password
+  register: nexus_initial_pw
+  changed_when: false
+  failed_when: false
+
+- name: Set effective Nexus admin password fact
+  ansible.builtin.set_fact:
+    nexus_effective_admin_password: >-
+      {{ nexus_admin_password | default(nexus_initial_pw.stdout | default('') | trim) }}
+
+- name: Change Nexus admin password when vault password provided
+  ansible.builtin.uri:
+    url: "{{ nexus_base_url }}/service/rest/v1/security/users/admin/change-password"
+    method: PUT
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_initial_pw.stdout | trim }}"
+    force_basic_auth: true
+    body: "{{ nexus_admin_password }}"
+    status_code: 204
+  when:
+    - nexus_admin_password is defined
+    - nexus_admin_password | length > 0
+    - nexus_initial_pw.rc == 0
+    - nexus_initial_pw.stdout | length > 0
+  no_log: true
+
+- name: Create Maven Central proxy repository
+  ansible.builtin.uri:
+    url: "{{ nexus_base_url }}/service/rest/v1/repositories/maven/proxy"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_effective_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "{{ nexus_repo_maven_central }}"
+      online: true
+      storage:
+        blobStoreName: default
+        strictContentTypeValidation: true
+      proxy:
+        remoteUrl: https://repo1.maven.org/maven2/
+        contentMaxAge: 1440
+        metadataMaxAge: 1440
+      negativeCache:
+        enabled: true
+        timeToLive: 1440
+      httpClient:
+        blocked: false
+        autoBlock: true
+      maven:
+        versionPolicy: RELEASE
+        layoutPolicy: STRICT
+    status_code: [201, 400]
+  register: repo_central
+  changed_when: repo_central.status == 201
+
+- name: Create Lightwell mock hosted repository
+  ansible.builtin.uri:
+    url: "{{ nexus_base_url }}/service/rest/v1/repositories/maven/hosted"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_effective_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "{{ nexus_repo_lightwell_mock }}"
+      online: true
+      storage:
+        blobStoreName: default
+        strictContentTypeValidation: true
+        writePolicy: ALLOW
+      maven:
+        versionPolicy: RELEASE
+        layoutPolicy: STRICT
+    status_code: [201, 400]
+  register: repo_mock
+  changed_when: repo_mock.status == 201
+
+- name: Create Lightwell remediated proxy repository
+  ansible.builtin.uri:
+    url: "{{ nexus_base_url }}/service/rest/v1/repositories/maven/proxy"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_effective_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "{{ nexus_repo_lightwell_proxy }}"
+      online: true
+      storage:
+        blobStoreName: default
+        strictContentTypeValidation: true
+      proxy:
+        remoteUrl: "{{ lightwell_remote_url }}"
+        contentMaxAge: 1440
+        metadataMaxAge: 1440
+      negativeCache:
+        enabled: true
+        timeToLive: 1440
+      httpClient:
+        blocked: false
+        autoBlock: true
+        authentication:
+          username: "{{ lightwell_maven_user | default('') }}"
+          password: "{{ lightwell_maven_token | default('') }}"
+      maven:
+        versionPolicy: RELEASE
+        layoutPolicy: STRICT
+    status_code: [201, 400]
+  when: configure_lightwell_proxy | bool
+  no_log: true
+  register: repo_lw
+  changed_when: repo_lw.status == 201
+
+- name: Build maven-public group member list
+  ansible.builtin.set_fact:
+    nexus_group_members: >-
+      {{
+        [nexus_repo_lightwell_mock, nexus_repo_maven_central]
+        if not (configure_lightwell_proxy | bool)
+        else [nexus_repo_lightwell_mock, nexus_repo_lightwell_proxy, nexus_repo_maven_central]
+      }}
+
+- name: Create maven-public group repository
+  ansible.builtin.uri:
+    url: "{{ nexus_base_url }}/service/rest/v1/repositories/maven/group"
+    method: POST
+    user: "{{ nexus_admin_user }}"
+    password: "{{ nexus_effective_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "{{ nexus_repo_maven_public }}"
+      online: true
+      storage:
+        blobStoreName: default
+        strictContentTypeValidation: true
+      group:
+        memberNames: "{{ nexus_group_members }}"
+      maven:
+        versionPolicy: RELEASE
+        layoutPolicy: STRICT
+    status_code: [201, 400]
+  register: repo_group
+  changed_when: repo_group.status == 201
+
+- name: Clone application repository for upload scripts
+  ansible.builtin.git:
+    repo: "{{ lightwell_app_repo }}"
+    dest: "{{ app_root }}"
+    version: "{{ lightwell_app_version }}"
+    force: true
+  when:
+    - upload_mock_artifacts_to_nexus | bool
+    - deploy_from_git | default(true) | bool
+
+- name: Sync application source for mock upload from controller
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../../"
+    dest: "{{ app_root }}/"
+    delete: false
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=target"
+      - "--exclude=mock-repo"
+  when:
+    - upload_mock_artifacts_to_nexus | bool
+    - not (deploy_from_git | default(true) | bool)
+
+- name: Stage mock Lightwell artifacts
+  ansible.builtin.command:
+    cmd: "{{ app_root | default('/opt/acme/lightwell_app') }}/scripts/build-mock-lightwell-repo.sh"
+    chdir: "{{ app_root | default('/opt/acme/lightwell_app') }}"
+  when: upload_mock_artifacts_to_nexus | bool
+  changed_when: true
+
+- name: Upload mock artifacts to Nexus hosted repo
+  ansible.builtin.command:
+    cmd: "{{ app_root | default('/opt/acme/lightwell_app') }}/scripts/upload-mock-to-nexus.sh"
+    chdir: "{{ app_root | default('/opt/acme/lightwell_app') }}"
+  environment:
+    NEXUS_URL: "{{ nexus_base_url }}"
+    NEXUS_REPO: "{{ nexus_repo_lightwell_mock }}"
+    NEXUS_USER: "{{ nexus_admin_user }}"
+    NEXUS_PASSWORD: "{{ nexus_effective_admin_password }}"
+  when: upload_mock_artifacts_to_nexus | bool
+  changed_when: true
+  no_log: true

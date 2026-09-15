@@ -2,11 +2,11 @@
   "steps": [
     {
       "text": "Before: ACME pins Spring Framework 5.3.18 from Maven Central. Representative Spring CVEs show as open.",
-      "visual": "spring-framework.version = 5.3.18\nrepository = repo.maven.apache.org/maven2\nSpring CVEs: VULNERABLE"
+      "visual": "spring-framework.version = 5.3.18\nMaven resolves via Nexus → maven-central proxy\nSpring CVEs: VULNERABLE"
     },
     {
-      "text": "One-time change: point Maven at the Lightwell remediated repository and bump only the version suffix.",
-      "visual": "<settings>\n  <url>https://packages.redhat.com/lightwell/java/remediated/</url>\n</settings>\n\n5.3.18  →  5.3.18.rhlw-00010"
+      "text": "One-time change: configure Nexus for Lightwell remediated artifacts; Maven settings point at Nexus; bump only the version suffix in pom.",
+      "visual": "Nexus: add lightwell-java-remediated-mock (hosted)\n  or proxy → packages.redhat.com/lightwell/java/remediated/\n\n5.3.18  →  5.3.18.rhlw-00010"
     },
     {
       "text": "After: same application JAR logic, drop-in Spring binaries with backported fixes. Jackson and Commons Text pins unchanged.",

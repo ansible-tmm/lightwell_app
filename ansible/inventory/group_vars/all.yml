@@ -10,11 +10,27 @@ lightwell_app_repo: "https://github.com/ansible-tmm/lightwell_app.git"
 lightwell_app_version: main
 
 deploy_from_git: true
+
+# Nexus (artifact manager) — Maven builds pull dependencies through Nexus
+use_nexus: true
+nexus_admin_user: admin
+# nexus_admin_password: in vault (required after provision_nexus)
+nexus_http_port: 8081
+nexus_repo_maven_central: maven-central
+nexus_repo_lightwell_mock: lightwell-java-remediated-mock
+nexus_repo_lightwell_proxy: lightwell-java-remediated
+nexus_repo_maven_public: maven-public
+nexus_base_url: "http://{{ hostvars[groups['nexus'][0]]['ansible_host'] | default('localhost') }}:{{ nexus_http_port }}"
+configure_lightwell_proxy: false
+
 maven_profile: community
-maven_settings_file: "{{ app_root }}/maven/settings-mock.xml"
-build_mock_lightwell_repo: false
+maven_settings_file: "{{ app_root }}/maven/settings-nexus.xml"
 use_real_lightwell: false
 fetch_artifact_to_controller: false
 controller_artifacts_dir: "{{ playbook_dir }}/../artifacts"
 
 jar_source: controller
+
+# provision_nexus.yml
+upload_mock_artifacts_to_nexus: true
+stage_mock_on_nexus_host: true

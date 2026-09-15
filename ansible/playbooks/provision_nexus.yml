@@ -1,0 +1,8 @@
+---
+- name: Provision Sonatype Nexus for Lightwell demo
+  hosts: nexus
+  gather_facts: true
+  vars:
+    app_root: "{{ app_install_dir | default('/opt/acme') }}/lightwell_app"
+  roles:
+    - role: nexus

@@ -7,5 +7,6 @@ mock-repo/
 .settings/
 .DS_Store
 maven/settings-lightwell.xml
+maven/settings-nexus.xml
 artifacts/
 !.mvn/wrapper/maven-wrapper.jar
