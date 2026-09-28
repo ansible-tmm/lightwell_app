@@ -148,8 +148,8 @@
         blocked: false
         autoBlock: true
         authentication:
-          username: "{{ lightwell_maven_user | default('') }}"
-          password: "{{ lightwell_maven_token | default('') }}"
+          username: "{{ lightwell_repo_user | default('') }}"
+          password: "{{ lightwell_repo_token | default('') }}"
       maven:
         versionPolicy: RELEASE
         layoutPolicy: STRICT

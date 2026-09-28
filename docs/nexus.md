@@ -1,17 +1,41 @@
 # Sonatype Nexus + Lightwell
 
-Demo focus: configure an enterprise **artifact manager** (Nexus) for Red Hat Lightwell remediated Java packages. No application build client in this phase.
+Nexus is the enterprise **artifact manager** for this demo: host a fake Lightwell Spring version, proxy Central, and optionally publish the ACME Order Hub JAR.
+
+For the staged walkthrough (build normally → Lightwell via Nexus), start with the [root README](../README.md).
 
 ## Repository layout
 
 | Nexus repo | Type | Purpose |
 |------------|------|---------|
 | `maven-central` | proxy | Upstream Maven Central |
-| `lightwell-java-remediated-mock` | hosted | Offline demo: `.rhlw-00010` Spring modules |
-| `lightwell-java-remediated` | proxy | Remote `https://packages.redhat.com/lightwell/java/remediated/` |
+| `lightwell-java-remediated-mock` | hosted | Fake `.rhlw-00010` Spring modules for demos |
+| `lightwell-java-remediated` | proxy | Optional real remote `packages.redhat.com/lightwell/java/remediated/` |
 | `maven-public` | group | Members ordered: mock → (optional RH proxy) → central |
+| `acme-releases` | hosted | ACME Order Hub application JAR (create in UI) |
 
-Browse artifacts in the Nexus UI under **Browse** → `lightwell-java-remediated-mock` or `maven-public`.
+## Already have Nexus
+
+1. Create the repositories in the table (UI or API). Skip names that exist.
+2. Upload fake Lightwell packages:
+
+```bash
+./scripts/build-mock-lightwell-repo.sh
+export NEXUS_URL='http://<nexus-host>:8081'
+export NEXUS_PASSWORD='...'
+./scripts/upload-mock-to-nexus.sh
+```
+
+3. Publish the app:
+
+```bash
+./mvnw -Pcommunity package
+NEXUS_URL='http://<nexus-host>:8081' NEXUS_PASSWORD='...' ./scripts/publish-app-to-nexus.sh
+```
+
+4. Point builds at `maven-public` via `maven/settings-nexus.xml` (from `settings-nexus.xml.example`).
+
+Scripts talk to the Nexus REST API with `curl`.
 
 ## Provision with Ansible
 
@@ -25,36 +49,22 @@ cp inventory/hosts.example.yml inventory/hosts.yml
 ansible-playbook -i inventory/hosts.yml playbooks/provision_nexus.yml
 ```
 
-This installs Nexus (Podman container), creates repositories, stages mock `.rhlw` artifacts, and uploads them to the hosted repo.
+Installs Nexus (Podman), creates Central / Lightwell mock / group, and uploads fake `.rhlw` artifacts. Create `acme-releases` in the UI for app publishing.
 
-## Manual mock upload
+## Real Lightwell proxy
 
-```bash
-./scripts/build-mock-lightwell-repo.sh
-export NEXUS_URL='http://<nexus-host>:8081'
-export NEXUS_PASSWORD='...'
-./scripts/upload-mock-to-nexus.sh
+```yaml
+configure_lightwell_proxy: true
+lightwell_repo_user: <service-account>
+lightwell_repo_token: <token>
 ```
 
-Scripts use `curl` against the Nexus REST API (no local build tool required).
+Credentials live in vault and are stored on the Nexus proxy remote.
 
-## Existing Nexus
+## Story libraries
 
-Set in `inventory/group_vars/all.yml`:
-
-- `nexus_base_url`
-- `nexus_admin_password` (vault)
-- Skip container install if you only need repo/API steps, or point inventory at the existing host
-
-Enable real Lightwell:
-
-- `configure_lightwell_proxy: true`
-- `lightwell_maven_user` / `lightwell_maven_token` in vault (stored on the Nexus proxy remote, not on developer machines)
-
-## Story libraries (what lands in Nexus)
-
-| Library | Community | Lightwell (mock hosted) |
+| Library | Community | Lightwell (fake hosted) |
 |---------|-----------|-------------------------|
-| Spring Framework | `5.3.18` (via Central proxy) | `5.3.18.rhlw-00010` |
+| Spring Framework | `5.3.18` | `5.3.18.rhlw-00010` |
 | Jackson Databind | `2.13.4.2` | unchanged (Central) |
 | Apache Commons Text | `1.9` | unchanged |

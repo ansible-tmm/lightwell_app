@@ -48,15 +48,15 @@
 
     <section class="card what-changed">
       <h2>What Lightwell changes</h2>
-      <p>Wire Lightwell into Nexus once — teams resolve remediated artifacts through the artifact manager.</p>
-      <pre class="diff"><code>Nexus (one-time)
-+ lightwell-java-remediated-mock (hosted)
-  or proxy → packages.redhat.com/lightwell/...
-+ maven-public group includes Lightwell
+      <p>Stage 1 builds normally. Stage 2 resolves a remediated Spring version through Nexus (fake hosted package for demos).</p>
+      <pre class="diff"><code>Stage 1
+  ./mvnw -Pcommunity package
 
-Artifact version
-  5.3.18  →  5.3.18.rhlw-00010</code></pre>
-      <p>See <code>README.md</code> and <code>docs/nexus.md</code> for Ansible provision.</p>
+Stage 2 (Nexus)
++ lightwell-java-remediated-mock (fake .rhlw)
++ maven-public includes Lightwell
+  5.3.18 → 5.3.18.rhlw-00010</code></pre>
+      <p>See <code>README.md</code> — table of contents for Stage 1, existing Nexus, and Stage 2.</p>
     </section>
   </main>
 

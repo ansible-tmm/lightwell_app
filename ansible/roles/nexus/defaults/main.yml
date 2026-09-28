@@ -15,7 +15,7 @@ configure_lightwell_proxy: false
 
 nexus_admin_user: admin
 # nexus_admin_password: set in vault
-# lightwell_maven_user / lightwell_maven_token: vault, for proxy remote auth when configure_lightwell_proxy
+# lightwell_repo_user / lightwell_repo_token: vault, for Lightwell proxy remote auth when configure_lightwell_proxy
 
 upload_mock_artifacts_to_nexus: true
 stage_mock_on_nexus_host: true

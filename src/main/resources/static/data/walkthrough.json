@@ -1,20 +1,20 @@
 {
   "steps": [
     {
-      "text": "Before: community Spring Framework 5.3.18 is available only via Maven Central. Representative Spring CVEs show as open.",
-      "visual": "Nexus: maven-central proxy only\nspring-framework = 5.3.18\nSpring CVEs: VULNERABLE"
+      "text": "Stage 1: Build ACME Order Hub normally with Spring Framework 5.3.18. Representative Spring CVEs show as open.",
+      "visual": "./mvnw -Pcommunity package\nspring-framework = 5.3.18\nSpring CVEs: VULNERABLE"
     },
     {
-      "text": "Configure Nexus once for Lightwell: hosted mock repo (demo) or proxy to packages.redhat.com/lightwell/java/remediated/, then include it in maven-public.",
-      "visual": "Nexus repos:\n  lightwell-java-remediated-mock (hosted)\n  or lightwell-java-remediated (proxy)\n  maven-public group → mock → central\n\n5.3.18  →  5.3.18.rhlw-00010"
+      "text": "Stage 2 prep: In Nexus, host a fake Lightwell package (5.3.18.rhlw-00010) and include it in maven-public. Optionally publish the app JAR to acme-releases.",
+      "visual": "Nexus hosted: lightwell-java-remediated-mock\nupload-mock-to-nexus.sh\npublish-app-to-nexus.sh → acme-releases"
     },
     {
-      "text": "After: remediated Spring binaries live in Nexus. Teams resolve the .rhlw version through the artifact manager—no app code changes.",
-      "visual": "Browse: lightwell-java-remediated-mock\nspring-framework = 5.3.18.rhlw-00010\nSpring CVEs: REMEDIATED (demo catalog)"
+      "text": "Rebuild with the lightwell profile. Dependencies resolve through Nexus; only the Spring version suffix changes.",
+      "visual": "./mvnw -Plightwell -s settings-nexus.xml\n5.3.18 → 5.3.18.rhlw-00010\nSpring CVEs: REMEDIATED (demo catalog)"
     },
     {
-      "text": "Same pins for Jackson and Commons Text; only the Spring version suffix changes. Nexus is the single place Lightwell enters the supply chain.",
-      "visual": "jackson-databind = 2.13.4.2 (unchanged)\ncommons-text = 1.9 (unchanged)\nLightwell path = Nexus only"
+      "text": "Jackson and Commons Text pins stay the same. Application code is unchanged — Nexus is where Lightwell enters the supply chain.",
+      "visual": "jackson-databind = 2.13.4.2\ncommons-text = 1.9\nLightwell path = Nexus hosted mock"
     }
   ]
 }

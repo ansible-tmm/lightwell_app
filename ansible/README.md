@@ -1,6 +1,6 @@
 # Ansible — Nexus + Lightwell
 
-Provisions **Sonatype Nexus** with Lightwell-oriented repositories and optional mock `.rhlw` uploads. Application build/deploy is out of scope for this phase.
+Provisions **Sonatype Nexus** with Lightwell-oriented repositories and optional fake `.rhlw` uploads. For day-to-day Stage 1 / Stage 2 builds against an **existing** Nexus, use the [root README](../README.md).
 
 ## Prerequisites
 
@@ -19,8 +19,8 @@ ansible-vault create inventory/group_vars/nexus/vault.yml
 # vault.yml
 nexus_admin_password: your-secure-password
 # Optional real Lightwell proxy on Nexus:
-# lightwell_maven_user: service-account
-# lightwell_maven_token: token
+# lightwell_repo_user: service-account
+# lightwell_repo_token: token
 ```
 
 ## Provision Nexus
@@ -29,7 +29,7 @@ nexus_admin_password: your-secure-password
 ansible-playbook -i inventory/hosts.yml playbooks/provision_nexus.yml
 ```
 
-Or via site playbook:
+Or:
 
 ```bash
 ansible-playbook -i inventory/hosts.yml playbooks/site.yml
@@ -38,16 +38,19 @@ ansible-playbook -i inventory/hosts.yml playbooks/site.yml
 Creates (Podman):
 
 - `maven-central` proxy
-- `lightwell-java-remediated-mock` hosted (+ uploads `.rhlw` Spring artifacts when enabled)
+- `lightwell-java-remediated-mock` hosted (+ uploads fake `.rhlw` Spring artifacts when enabled)
 - `lightwell-java-remediated` proxy (when `configure_lightwell_proxy: true`)
 - `maven-public` group
 
+Create `acme-releases` (hosted) in the Nexus UI to publish the application JAR.
+
 ## Existing Nexus
 
-1. Skip `provision_nexus.yml` if Nexus already runs.
-2. Create matching repo names or override `nexus_repo_*` in `group_vars/all.yml`.
-3. Set `nexus_base_url` and vault password.
-4. Run `scripts/upload-mock-to-nexus.sh` from the repo root, or keep `upload_mock_artifacts_to_nexus: true` against a reachable host.
+Prefer the [README “Already have Nexus?”](../README.md#already-have-nexus) steps (UI + scripts). If you still want Ansible against an existing host:
+
+1. Point inventory `nexus` at that host; skip container install or set vars accordingly.
+2. Override `nexus_repo_*` / `nexus_base_url` if names differ.
+3. Keep `upload_mock_artifacts_to_nexus: true` or run `scripts/upload-mock-to-nexus.sh` locally.
 
 ## Variables
 
