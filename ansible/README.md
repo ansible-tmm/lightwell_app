@@ -1,12 +1,12 @@
-# Ansible automation — Lightwell demo app
+# Ansible — Nexus + Lightwell
 
-**Nexus** provisions artifact hosting; **Maven** builds on the build host; **deploy** runs the JAR under systemd.
+Provisions **Sonatype Nexus** with Lightwell-oriented repositories and optional mock `.rhlw` uploads. Application build/deploy is out of scope for this phase.
 
 ## Prerequisites
 
 - Ansible 2.14+
-- SSH to RHEL hosts (`nexus`, `build`, `app` groups)
-- Vault file with at least `nexus_admin_password`
+- SSH to a RHEL host in the `nexus` inventory group
+- Vault with `nexus_admin_password`
 
 ```bash
 cd ansible
@@ -23,68 +23,32 @@ nexus_admin_password: your-secure-password
 # lightwell_maven_token: token
 ```
 
-## Step 1 — Nexus
+## Provision Nexus
 
 ```bash
 ansible-playbook -i inventory/hosts.yml playbooks/provision_nexus.yml
 ```
 
+Or via site playbook:
+
+```bash
+ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+```
+
 Creates (Podman):
 
 - `maven-central` proxy
-- `lightwell-java-remediated-mock` hosted (+ uploads `.rhlw` Spring artifacts)
+- `lightwell-java-remediated-mock` hosted (+ uploads `.rhlw` Spring artifacts when enabled)
 - `lightwell-java-remediated` proxy (when `configure_lightwell_proxy: true`)
 - `maven-public` group
 
-## Step 2 — Build
-
-Community:
-
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/build.yml
-```
-
-Lightwell (after Nexus mock upload):
-
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/build.yml -e maven_profile=lightwell
-```
-
-Build host receives templated `maven/settings-nexus.xml` pointing at `nexus_base_url`.
-
-Optional fetch JAR to controller:
-
-```bash
--e fetch_artifact_to_controller=true
-```
-
-## Step 3 — Deploy
-
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/deploy.yml -e jar_source=controller
-```
-
-Or after build on same inventory run:
-
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/build.yml playbooks/deploy.yml -e jar_source=build_host
-```
-
 ## Existing Nexus
 
-1. Skip `provision_nexus.yml`.
+1. Skip `provision_nexus.yml` if Nexus already runs.
 2. Create matching repo names or override `nexus_repo_*` in `group_vars/all.yml`.
 3. Set `nexus_base_url` and vault password.
-4. Run `upload-mock-to-nexus.sh` manually or set `upload_mock_artifacts_to_nexus: false` if using RH proxy only.
+4. Run `scripts/upload-mock-to-nexus.sh` from the repo root, or keep `upload_mock_artifacts_to_nexus: true` against a reachable host.
 
-## Site playbook
+## Variables
 
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/site.yml --tags nexus
-ansible-playbook -i inventory/hosts.yml playbooks/site.yml --tags build -e maven_profile=lightwell
-ansible-playbook -i inventory/hosts.yml playbooks/site.yml --tags deploy -e jar_source=controller
-```
-
-## Optional EC2
-
-`playbooks/provision_build_ec2.yml` — launch RHEL builder; add IP to inventory.
+See `roles/nexus/defaults/main.yml` and [docs/nexus.md](../docs/nexus.md).

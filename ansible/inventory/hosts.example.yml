@@ -1,5 +1,6 @@
 ---
 # Copy to hosts.yml and set ansible_host / SSH user for your environment.
+# Nexus-only phase: only the nexus group is required.
 all:
   children:
     nexus:
@@ -7,15 +8,3 @@ all:
         lightwell-nexus:
           ansible_host: 10.0.1.49
           ansible_user: ec2-user
-    build:
-      hosts:
-        lightwell-builder:
-          ansible_host: 10.0.1.50
-          ansible_user: ec2-user
-    app:
-      hosts:
-        lightwell-app:
-          ansible_host: 10.0.1.51
-          ansible_user: ec2-user
-          # Same host as builder for all-in-one demos:
-          # ansible_host: 10.0.1.50

@@ -3,13 +3,3 @@
   ansible.builtin.import_playbook: provision_nexus.yml
   tags:
     - nexus
-
-- name: Build artifact
-  ansible.builtin.import_playbook: build.yml
-  tags:
-    - build
-
-- name: Deploy application
-  ansible.builtin.import_playbook: deploy.yml
-  tags:
-    - deploy

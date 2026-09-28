@@ -11,7 +11,7 @@ lightwell_app_version: main
 
 deploy_from_git: true
 
-# Nexus (artifact manager) — Maven builds pull dependencies through Nexus
+# Nexus (artifact manager) — primary demo deliverable
 use_nexus: true
 nexus_admin_user: admin
 # nexus_admin_password: in vault (required after provision_nexus)

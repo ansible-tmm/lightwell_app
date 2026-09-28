@@ -1,104 +1,66 @@
 # lightwell_app
 
-**ACME Order Hub** — demo webapp for [Red Hat Lightwell Network](https://www.redhat.com/en/technologies/cloud/lightwell-network). Shows pinned Java dependencies and surgical backports: Spring `5.3.18` → `5.3.18.rhlw-00010` with **no application code changes**.
+**Nexus + Red Hat Lightwell** demo: stand up [Sonatype Nexus Repository](https://www.sonatype.com/products/sonatype-nexus-repository) and wire it for Lightwell remediated Java artifacts (`5.3.18` → `5.3.18.rhlw-00010`).
 
-**Maven** builds the app. **Sonatype Nexus** is the artifact manager (customer-style consumption through a repository manager).
+This phase matches the **Nexus-only** path (no application Maven build in scope). Consumption story: enterprise artifact manager → Lightwell hosted/proxy repos → `maven-public` group.
 
-## Story libraries (3)
+## What you get
 
-| Library | Before (`community`) | After (`lightwell`) |
-|---------|----------------------|---------------------|
-| Spring Framework | `5.3.18` | `5.3.18.rhlw-00010` via Nexus |
-| Jackson Databind | `2.13.4.2` | unchanged (Nexus → Central proxy) |
-| Apache Commons Text | `1.9` | unchanged |
+| Nexus repository | Type | Role |
+|------------------|------|------|
+| `maven-central` | proxy | Upstream Maven Central |
+| `lightwell-java-remediated-mock` | hosted | Offline demo: Spring `.rhlw-00010` artifacts |
+| `lightwell-java-remediated` | proxy | Optional: `packages.redhat.com/lightwell/java/remediated/` |
+| `maven-public` | group | Ordered: mock → (optional RH) → central |
 
 ## Prerequisites
 
-- JDK 11, `./mvnw`
-- **Nexus** (Ansible `provision_nexus.yml` or existing instance) — see [docs/nexus.md](docs/nexus.md)
+- Ansible 2.14+
+- SSH to a RHEL host (Podman)
+- Vault password for Nexus admin (and optional Lightwell service account)
 
 ## Quick start
-
-### 1. Nexus (Ansible)
 
 ```bash
 cd ansible
 ansible-galaxy collection install -r requirements.yml
 cp inventory/hosts.example.yml inventory/hosts.yml
+# Edit nexus host IP / SSH user
+ansible-vault create inventory/group_vars/nexus/vault.yml
+# vault.yml → nexus_admin_password: <secure-password>
+
 ansible-playbook -i inventory/hosts.yml playbooks/provision_nexus.yml
 ```
 
-Store `nexus_admin_password` in vault (`inventory/group_vars/nexus/vault.yml`).
+Open Nexus UI: `http://<nexus-host>:8081`
 
-### 2. Maven settings
+Ansible will:
 
-```bash
-cp maven/settings-nexus.xml.example maven/settings-nexus.xml
-# Edit URL and admin password to match your Nexus host
+1. Run Nexus OSS in Podman
+2. Create the repositories above
+3. Stage and upload mock `.rhlw` Spring modules into the hosted repo
+
+Details: [docs/nexus.md](docs/nexus.md) · [ansible/README.md](ansible/README.md)
+
+## Optional: real Lightwell proxy
+
+In vault / group vars:
+
+```yaml
+configure_lightwell_proxy: true
+lightwell_maven_user: <service-account>
+lightwell_maven_token: <token>
 ```
 
-### 3. Build and run
+Then re-run `provision_nexus.yml` (or create the proxy repo once credentials exist).
 
-**Before:**
-
-```bash
-./scripts/cve-status.sh community
-./mvnw -Pcommunity -s maven/settings-nexus.xml package
-java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
-```
-
-**After (mock Lightwell on Nexus hosted repo):**
+## Manual mock upload (existing Nexus)
 
 ```bash
-# If not using Ansible upload:
 ./scripts/build-mock-lightwell-repo.sh
-NEXUS_PASSWORD='...' ./scripts/upload-mock-to-nexus.sh
-
-./scripts/cve-status.sh lightwell
-./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package
-java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
+NEXUS_URL='http://<host>:8081' NEXUS_PASSWORD='...' ./scripts/upload-mock-to-nexus.sh
 ```
-
-Open http://localhost:8080
-
-### App-only build (no Nexus)
-
-For a quick compile smoke test without Nexus:
-
-```bash
-./mvnw -Pcommunity package
-```
-
-The `lightwell` profile **requires** Nexus (or direct `settings-lightwell.xml` to packages.redhat.com).
-
-## APIs
-
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /` | Demo console |
-| `GET /api/status` | Versions, Nexus repo labels, demo CVEs |
-| `POST /api/orders` | JSON order + templated status |
-| `GET /health` | Probe |
-
-## Ansible pipeline
-
-| Step | Playbook |
-|------|----------|
-| Nexus | `playbooks/provision_nexus.yml` |
-| Build | `playbooks/build.yml` |
-| Deploy | `playbooks/deploy.yml` |
-
-```bash
-ansible-playbook -i inventory/hosts.yml playbooks/site.yml --tags nexus,build,deploy
-```
-
-Details: [ansible/README.md](ansible/README.md)
 
 ## Docs
 
-- [docs/maven.md](docs/maven.md) — Maven profiles and wrapper
-- [docs/nexus.md](docs/nexus.md) — Repository layout and variables
-
-## Legacy
-
-`maven/settings-mock.xml` and `file://mock-repo` are **deprecated**; use Nexus hosted repo + `upload-mock-to-nexus.sh`.
+- [docs/nexus.md](docs/nexus.md) — repository layout, variables, existing Nexus
