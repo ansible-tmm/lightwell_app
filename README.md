@@ -35,7 +35,7 @@ Open http://localhost:8080
 
 ## Already have Nexus?
 
-Use this path when Nexus is already running (e.g. Anshul’s instance). You do **not** need Ansible provisioning.
+Use this path when Nexus is already running. You do **not** need Ansible provisioning.
 
 ### A. Create repositories (Nexus UI)
 
