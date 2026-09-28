@@ -45,7 +45,7 @@ In the create dialog, pick the Java package recipe Nexus labels **maven2** (that
 
 | Name | Type | Notes |
 |------|------|--------|
-| `central` | **proxy** | Remote URL: `https://repo1.maven.org/maven2/` |
+| `central` | **proxy** | Remote URL for the public Java registry (Central): `https://repo1.maven.org/maven2/` — that path is Central’s official address, not a build-tool install |
 | `lightwell-java-remediated-mock` | **hosted** | Version policy: Release; write policy: Allow |
 | `acme-releases` | **hosted** | Holds the ACME Order Hub JAR |
 | `public` | **group** | Members (order matters): `lightwell-java-remediated-mock`, then `central` |

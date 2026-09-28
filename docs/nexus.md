@@ -8,7 +8,7 @@ For the staged walkthrough (build normally → Lightwell via Nexus), start with 
 
 | Nexus repo | Type | Purpose |
 |------------|------|---------|
-| `central` | proxy | Upstream Central (`repo1.maven.org`) |
+| `central` | proxy | Upstream Central — remote `https://repo1.maven.org/maven2/` (Central’s public registry URL) |
 | `lightwell-java-remediated-mock` | hosted | Fake `.rhlw-00010` Spring modules for demos |
 | `lightwell-java-remediated` | proxy | Optional real remote `packages.redhat.com/lightwell/java/remediated/` |
 | `public` | group | Members ordered: mock → (optional RH proxy) → central |
