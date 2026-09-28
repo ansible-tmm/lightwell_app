@@ -6,6 +6,8 @@ For the staged walkthrough (build normally → Lightwell via Nexus), start with 
 
 ## Repository layout
 
+Create these in the Nexus UI (see also [README — Repositories to create](../README.md#repositories-to-create)):
+
 | Nexus repo | Type | Purpose |
 |------------|------|---------|
 | `central` | proxy | Upstream Central — remote `https://repo1.maven.org/maven2/` (Central’s public registry URL) |
