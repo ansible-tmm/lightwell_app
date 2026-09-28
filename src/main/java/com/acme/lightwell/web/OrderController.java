@@ -67,13 +67,21 @@ public class OrderController {
     public Map<String, Object> status() {
         boolean lightwellSpring = springFrameworkVersion.contains("rhlw");
         String springRepo = lightwellSpring
-                ? "Nexus (Lightwell remediated hosted/proxy)"
-                : "Nexus (Central proxy)";
+                ? "Nexus · lightwell-java-remediated"
+                : "Community · public Central";
+        String otherRepo = lightwellSpring
+                ? "Unchanged pin · Central via Nexus"
+                : "Community · public Central";
+        String springNote = lightwellSpring
+                ? "Stage 2: remediated .rhlw build resolved through Nexus"
+                : "Stage 2 will swap to 5.3.18.rhlw-00010 via Nexus (same app code)";
 
         List<Map<String, String>> dependencies = List.of(
-                dep("Spring Framework", "org.springframework:spring-webmvc", springFrameworkVersion, springRepo),
-                dep("Jackson Databind", "com.fasterxml.jackson.core:jackson-databind", jacksonVersion, "Nexus (Central proxy)"),
-                dep("Apache Commons Text", "org.apache.commons:commons-text", commonsTextVersion, "Nexus (Central proxy)"));
+                dep("Spring Framework", "org.springframework:spring-webmvc", springFrameworkVersion, springRepo, springNote),
+                dep("Jackson Databind", "com.fasterxml.jackson.core:jackson-databind", jacksonVersion, otherRepo,
+                        "Pin unchanged — stays in the demo catalog as VULNERABLE"),
+                dep("Apache Commons Text", "org.apache.commons:commons-text", commonsTextVersion, otherRepo,
+                        "Pin unchanged — stays in the demo catalog as VULNERABLE"));
 
         List<Map<String, String>> cves = VulnerabilityCatalog.rowsFor(springFrameworkVersion).stream()
                 .map(row -> {
@@ -81,6 +89,8 @@ public class OrderController {
                     m.put("cveId", row.getCveId());
                     m.put("library", row.getLibrary());
                     m.put("status", row.getStatus().name());
+                    m.put("storyRole", row.getStoryRole().name());
+                    m.put("nvdUrl", row.getNvdUrl());
                     return m;
                 })
                 .collect(Collectors.toList());
@@ -90,6 +100,7 @@ public class OrderController {
         body.put("springFrameworkVersion", springFrameworkVersion);
         body.put("jacksonVersion", jacksonVersion);
         body.put("commonsTextVersion", commonsTextVersion);
+        body.put("lightwellActive", lightwellSpring);
         body.put("dependencies", dependencies);
         body.put("cves", cves);
         return body;
@@ -100,12 +111,14 @@ public class OrderController {
         return Map.of("status", "UP");
     }
 
-    private static Map<String, String> dep(String name, String coordinate, String version, String repository) {
+    private static Map<String, String> dep(
+            String name, String coordinate, String version, String repository, String note) {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("name", name);
         m.put("coordinate", coordinate);
         m.put("version", version);
         m.put("repository", repository);
+        m.put("note", note);
         return m;
     }
 

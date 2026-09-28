@@ -4,12 +4,17 @@
   const cveEl = document.getElementById('cve-list');
   const form = document.getElementById('order-form');
   const resultEl = document.getElementById('order-result');
+  const WT_KEY = 'acme-wt-offered';
 
   function renderStatus(data) {
-    const isLw = data.springFrameworkVersion && data.springFrameworkVersion.includes('rhlw');
+    const isLw = !!(data.lightwellActive || (data.springFrameworkVersion && data.springFrameworkVersion.includes('rhlw')));
     bannerEl.className = 'build-banner ' + (isLw ? 'lightwell' : 'community');
     const verClass = isLw ? 'version rhlw' : 'version';
+    const kicker = isLw
+      ? 'Stage 2 build — Lightwell Spring via Nexus'
+      : 'Stage 1 build — community packages (before Lightwell)';
     bannerEl.innerHTML =
+      '<span class="banner-kicker">' + escapeHtml(kicker) + '</span>' +
       '<strong>Built from:</strong> ' + escapeHtml(data.buildProfile) +
       ' &nbsp;|&nbsp; <span class="' + verClass + '">Spring ' + escapeHtml(data.springFrameworkVersion) + '</span>';
 
@@ -17,25 +22,58 @@
     (data.dependencies || []).forEach(function (dep) {
       const card = document.createElement('article');
       const lw = dep.repository && dep.repository.toLowerCase().includes('lightwell');
-      card.className = 'card dep-card' + (lw ? ' lightwell' : '');
+      const isSpring = dep.name && dep.name.toLowerCase().includes('spring');
+      card.className = 'card dep-card' + (lw ? ' lightwell' : '') + (isSpring ? ' spring-focus' : '');
       card.innerHTML =
         '<h3>' + escapeHtml(dep.name) + '</h3>' +
         '<div class="coord">' + escapeHtml(dep.coordinate) + '</div>' +
         '<div class="ver">' + escapeHtml(dep.version) + '</div>' +
+        (dep.note ? '<p class="note">' + escapeHtml(dep.note) + '</p>' : '') +
         '<span class="repo-pill' + (lw ? ' lw' : '') + '">' + escapeHtml(dep.repository) + '</span>';
       depsEl.appendChild(card);
     });
 
-    cveEl.innerHTML = '';
+    const targets = [];
+    const unchanged = [];
     (data.cves || []).forEach(function (row) {
-      const div = document.createElement('div');
-      div.className = 'cve-row';
-      div.innerHTML =
-        '<span class="chip ' + row.status + '">' + row.status + '</span>' +
-        '<strong>' + escapeHtml(row.cveId) + '</strong>' +
-        '<span>' + escapeHtml(row.library) + '</span>';
-      cveEl.appendChild(div);
+      if (row.storyRole === 'UNCHANGED_PIN') {
+        unchanged.push(row);
+      } else {
+        targets.push(row);
+      }
     });
+
+    cveEl.innerHTML = '';
+    if (targets.length) {
+      appendGroupLabel(cveEl, 'Lightwell target (Spring)');
+      targets.forEach(function (row) { cveEl.appendChild(cveRowEl(row)); });
+    }
+    if (unchanged.length) {
+      appendGroupLabel(cveEl, 'Unchanged pins (not remediated in this demo)');
+      unchanged.forEach(function (row) { cveEl.appendChild(cveRowEl(row)); });
+    }
+  }
+
+  function appendGroupLabel(parent, text) {
+    const label = document.createElement('div');
+    label.className = 'cve-group-label';
+    label.textContent = text;
+    parent.appendChild(label);
+  }
+
+  function cveRowEl(row) {
+    const div = document.createElement('div');
+    const unchanged = row.storyRole === 'UNCHANGED_PIN';
+    div.className = 'cve-row ' + (unchanged ? 'unchanged' : 'target');
+    const url = row.nvdUrl || ('https://nvd.nist.gov/vuln/detail/' + row.cveId);
+    const roleLabel = unchanged ? 'pin unchanged' : (row.status === 'REMEDIATED' ? 'remediated in Stage 2' : 'flips in Stage 2');
+    div.innerHTML =
+      '<span class="chip ' + escapeHtml(row.status) + '">' + escapeHtml(row.status) + '</span>' +
+      '<a class="cve-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+        escapeHtml(row.cveId) + '</a>' +
+      '<span class="lib">' + escapeHtml(row.library) + '</span>' +
+      '<span class="role-tag">' + escapeHtml(roleLabel) + '</span>';
+    return div;
   }
 
   function escapeHtml(s) {
@@ -49,7 +87,10 @@
 
   fetch('/api/status')
     .then(function (r) { return r.json(); })
-    .then(renderStatus)
+    .then(function (data) {
+      renderStatus(data);
+      maybeOfferWalkthrough();
+    })
     .catch(function () {
       bannerEl.textContent = 'Could not load /api/status';
     });
@@ -78,10 +119,10 @@
       });
   });
 
-  /* Walkthrough — simulation only; does not alter live status cards */
   const overlay = document.getElementById('walkthrough-overlay');
   const wtText = document.getElementById('wt-step-text');
   const wtVisual = document.getElementById('wt-visual');
+  const wtNext = document.getElementById('wt-next');
   let wtSteps = [];
   let wtIndex = 0;
 
@@ -97,6 +138,17 @@
     }
     wtText.textContent = step.text;
     wtVisual.textContent = step.visual || '';
+    wtNext.textContent = wtIndex >= wtSteps.length - 1 ? 'Done' : 'Next';
+  }
+
+  function openWalkthrough() {
+    loadWalkthrough().then(function (data) {
+      wtSteps = data.steps || [];
+      wtIndex = 0;
+      overlay.classList.remove('hidden');
+      showWtStep();
+      try { sessionStorage.setItem(WT_KEY, '1'); } catch (e) { /* ignore */ }
+    });
   }
 
   function closeWalkthrough() {
@@ -104,17 +156,21 @@
     wtIndex = 0;
   }
 
-  document.getElementById('walkthrough-btn').addEventListener('click', function () {
-    loadWalkthrough().then(function (data) {
-      wtSteps = data.steps || [];
-      wtIndex = 0;
-      overlay.classList.remove('hidden');
-      showWtStep();
-    });
-  });
+  function maybeOfferWalkthrough() {
+    try {
+      if (sessionStorage.getItem(WT_KEY)) return;
+    } catch (e) {
+      return;
+    }
+    window.setTimeout(function () {
+      if (!overlay.classList.contains('hidden')) return;
+      openWalkthrough();
+    }, 700);
+  }
 
+  document.getElementById('walkthrough-btn').addEventListener('click', openWalkthrough);
   document.getElementById('wt-skip').addEventListener('click', closeWalkthrough);
-  document.getElementById('wt-next').addEventListener('click', function () {
+  wtNext.addEventListener('click', function () {
     wtIndex += 1;
     if (wtIndex >= wtSteps.length) {
       closeWalkthrough();

@@ -1,20 +1,20 @@
 {
   "steps": [
     {
-      "text": "Stage 1: Build ACME Order Hub normally with Spring Framework 5.3.18. Representative Spring CVEs show as open.",
-      "visual": "./mvnw -Pcommunity package\nspring-framework = 5.3.18\nSpring CVEs: VULNERABLE"
+      "text": "Stage 1 (this build if you used -Pcommunity): ACME pins Spring Framework 5.3.18 from community packages. The demo catalog marks representative Spring CVEs as VULNERABLE.",
+      "visual": "Build: ./mvnw -Pcommunity package\nSpring = 5.3.18\nJackson / Commons Text pins unchanged\nCVE table = story prop (not a scanner)"
     },
     {
-      "text": "Stage 2 prep: In Nexus, put fake Lightwell packages in lightwell-java-remediated and ensure maven-public searches it first. Optionally publish the app JAR to maven-releases.",
-      "visual": "Nexus hosted: lightwell-java-remediated\nupload-mock-to-nexus.sh\npublish-app-to-nexus.sh → maven-releases"
+      "text": "Wire Nexus once: put fake Lightwell packages in lightwell-java-remediated and search that repo first in maven-public. Optionally publish the app JAR to maven-releases.",
+      "visual": "maven-public members (order):\n  1. lightwell-java-remediated\n  2. maven-central (and other stock members)\n\nupload-mock-to-nexus.sh → Lightwell hosted"
     },
     {
-      "text": "Rebuild with the lightwell profile. Dependencies resolve through Nexus; only the Spring version suffix changes.",
-      "visual": "./mvnw -Plightwell -s settings-nexus.xml\n5.3.18 → 5.3.18.rhlw-00010\nSpring CVEs: REMEDIATED (demo catalog)"
+      "text": "Stage 2: rebuild with the lightwell profile. Only the Spring version becomes 5.3.18.rhlw-00010. Spring CVE rows flip to REMEDIATED; Jackson and Commons Text stay VULNERABLE on purpose.",
+      "visual": "./mvnw -Plightwell -s maven/settings-nexus.xml\n5.3.18 → 5.3.18.rhlw-00010\nSpring CVEs → REMEDIATED\nOther pins → still VULNERABLE (surgical)"
     },
     {
-      "text": "Jackson and Commons Text pins stay the same. Application code is unchanged — Nexus is where Lightwell enters the supply chain.",
-      "visual": "jackson-databind = 2.13.4.2\ncommons-text = 1.9\nLightwell path = Nexus hosted mock"
+      "text": "Same order API, same application code. Lightwell entered through Nexus — not a rewrite of ACME Order Hub.",
+      "visual": "App code: unchanged\nResolve path: Nexus maven-public\nStory: pin forever, remediate the library you choose"
     }
   ]
 }
