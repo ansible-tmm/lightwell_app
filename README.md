@@ -30,27 +30,36 @@
 flowchart TB
   subgraph dependency_path ["Dependency path"]
     direction TB
-    LW["hosted: lightwell-java-remediated-mock"]
+    CentralNet["Public Java registry (Central)"]
     C["proxy: central"]
+    LW["hosted: lightwell-java-remediated-mock"]
     G["group: public"]
-    LW -->|"member (first)"| G
-    C -->|"member (second)"| G
-    CentralNet["Public Java registry (Central)"] -->|"proxied by"| C
-    Build["App build"] -->|"resolves from"| G
+    CentralNet -->|"upstream for"| C
+    LW -->|"searched first"| G
+    C -->|"fallback"| G
   end
 
-  subgraph publish_target ["App publish target — not in public"]
+  Build["App build"] -->|"resolves from"| G
+
+  subgraph publish_target ["App publish target"]
     APP["hosted: acme-releases"]
   end
+  APP -.->|"not a member of public"| G
 ```
 
-**How packages and the app JAR move** — labeled edges for upload / resolve / publish:
+**How packages and the app JAR move** — same Nexus instance; upload / resolve / publish are different paths:
 
 ```mermaid
 flowchart LR
-  Upload["upload-mock-to-nexus.sh"] -->|"publishes fake .rhlw"| LW["hosted: lightwell-java-remediated-mock"]
-  Build["App build"] -->|"resolves deps"| Pub["group: public"]
-  Publish["publish-app-to-nexus.sh"] -->|"publishes app JAR"| APP["hosted: acme-releases"]
+  Upload["upload-mock-to-nexus.sh"] -->|"publishes fake .rhlw"| LW
+  Build["App build"] -->|"resolves deps"| Pub
+  Publish["publish-app-to-nexus.sh"] -->|"publishes app JAR"| APP
+
+  subgraph Nexus
+    LW["hosted: lightwell-java-remediated-mock"]
+    Pub["group: public"]
+    APP["hosted: acme-releases"]
+  end
 ```
 
 **Demo flow** — Stage 1 first, then Lightwell via Nexus, publish when you want:
@@ -64,7 +73,7 @@ flowchart TD
   S2 --> Pub2["Optional: re-publish JAR → acme-releases"]
 ```
 
-Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-…-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell first, then Central). `acme-releases` is only for the app JAR — it is **not** a member of `public`.
+Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-…-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell searched first, then Central as fallback). `acme-releases` is only for the app JAR — it is **not** a member of `public`.
 
 ## Stage 1 — Build the app normally
 
