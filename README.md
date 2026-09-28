@@ -116,12 +116,23 @@ Skip it if you only care about build + Nexus. Use it when you want a terminal be
 
 Community Spring Framework `5.3.18` from public Central. No Nexus required.
 
+**1. Build the application**
+
 ```bash
 ./mvnw -Pcommunity package
+```
+
+`./mvnw` is the project build wrapper (downloads the build tool if needed — you do not install anything globally).  
+`-Pcommunity` selects the **community** profile in `pom.xml` (Spring Framework pinned to `5.3.18`).  
+`package` compiles the app and produces a runnable JAR at `target/lightwell-app-1.0.0-SNAPSHOT.jar`.
+
+**2. Run the application**
+
+```bash
 java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
 ```
 
-Open http://localhost:8080 — the console shows the same before/after CVE story as the optional script.
+Starts the Spring Boot server using that JAR (needs JDK 11+). Leave this terminal running; open http://localhost:8080 for the demo console (same before/after CVE story as the optional script). Stop with Ctrl+C when finished.
 
 Optional talk-track printout: `./scripts/cve-status.sh community`
 
