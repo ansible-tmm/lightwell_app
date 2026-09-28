@@ -24,56 +24,45 @@
 
 ## How the pieces fit
 
-**Nexus layout** — dependency path only. `acme-releases` is a separate publish target (not a `public` member).
+**Nexus layout** — how dependency resolution is wired. Publish target sits aside (not in the group).
 
 ```mermaid
 flowchart TB
-  subgraph dependency_path ["Dependency path"]
-    direction TB
-    CentralNet["Public Java registry (Central)"]
-    C["proxy: central"]
-    LW["hosted: lightwell-java-remediated-mock"]
-    G["group: public"]
-    CentralNet -->|"upstream for"| C
-    LW -->|"searched first"| G
-    C -->|"fallback"| G
-  end
-
-  Build["App build"] -->|"resolves from"| G
-
-  subgraph publish_target ["App publish target"]
-    APP["hosted: acme-releases"]
-  end
-  APP -.->|"not a member of public"| G
+  Central["Public Java registry (Central)"] -->|"upstream"| Proxy["proxy: central"]
+  Mock["hosted: lightwell-java-remediated-mock"] -->|"searched first"| Group["group: public"]
+  Proxy -->|"fallback"| Group
+  Build["App build"] -->|"resolves from"| Group
+  AppRepo["hosted: acme-releases"] -.->|"not a member of public"| Group
 ```
 
-**How packages and the app JAR move** — same Nexus instance; upload / resolve / publish are different paths:
+**How packages and the app JAR move** — same Nexus; three different paths:
 
 ```mermaid
 flowchart LR
-  Upload["upload-mock-to-nexus.sh"] -->|"publishes fake .rhlw"| LW
-  Build["App build"] -->|"resolves deps"| Pub
-  Publish["publish-app-to-nexus.sh"] -->|"publishes app JAR"| APP
+  Upload["upload-mock-to-nexus.sh"] -->|"publishes fake .rhlw"| Mock
+  Build["App build"] -->|"resolves deps"| Group
+  Publish["publish-app-to-nexus.sh"] -->|"publishes app JAR"| AppRepo
 
   subgraph Nexus
-    LW["hosted: lightwell-java-remediated-mock"]
-    Pub["group: public"]
-    APP["hosted: acme-releases"]
+    Mock["hosted: lightwell-java-remediated-mock"]
+    Group["group: public"]
+    AppRepo["hosted: acme-releases"]
   end
 ```
 
-**Demo flow** — Stage 1 first, then Lightwell via Nexus, publish when you want:
+**Demo flow** — do Stage 1, then Stage 2; publish is optional either time:
 
 ```mermaid
 flowchart TD
   S1["Stage 1: build community"] --> Run1["Run JAR locally"]
-  S1 --> Pub1["Optional: publish JAR → acme-releases"]
-  Prep["upload-mock-to-nexus.sh\n→ lightwell-java-remediated-mock"] --> S2
-  S2["Stage 2: build lightwell\n(resolves via public)"] --> Run2["Run remediated JAR"]
-  S2 --> Pub2["Optional: re-publish JAR → acme-releases"]
+  S1 --> Pub1["Optional: publish JAR"]
+  S1 -->|"next"| Prep["Upload fake Lightwell packages"]
+  Prep --> S2["Stage 2: build lightwell via public"]
+  S2 --> Run2["Run remediated JAR"]
+  S2 --> Pub2["Optional: re-publish JAR"]
 ```
 
-Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-…-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell searched first, then Central as fallback). `acme-releases` is only for the app JAR — it is **not** a member of `public`.
+Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-java-remediated-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell searched first, Central as fallback). `acme-releases` holds the app JAR only — it is **not** a member of `public`.
 
 ## Stage 1 — Build the app normally
 
