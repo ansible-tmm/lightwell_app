@@ -94,23 +94,86 @@ Full command blocks: [Already have Nexus?](#already-have-nexus) and [Stage 2](#s
 
 The pitch is surgical remediation: pin Spring forever, then swap in a Lightwell build of the **same** version line through Nexus — no app code rewrite.
 
-| Beat | What you show | Spring version | Spring CVEs in the demo |
-|------|----------------|----------------|-------------------------|
+| Beat | What you show | Spring version | Spring rows in the demo catalog |
+|------|----------------|----------------|----------------------------------|
 | **Before** (Stage 1) | Build from community packages | `5.3.18` | VULNERABLE |
 | **After** (Stage 2) | Same app, resolve via Nexus Lightwell hosted | `5.3.18.rhlw-00010` | REMEDIATED |
 
-Jackson and Commons Text stay **VULNERABLE** on purpose — this demo only remediates Spring, so you can say “Lightwell fixed the library we chose, not everything at once.”
+**Important:** `./scripts/cve-status.sh` is **not a vulnerability scanner**. It prints a **hardcoded demo catalog** (same logic as the UI / `GET /api/status`). The CVE **IDs are real** public identifiers you can read about; the VULNERABLE / REMEDIATED labels in this repo flip only because the Spring version string contains `rhlw` (or not). Jackson and Commons Text stay VULNERABLE on purpose — this demo only “remediates” Spring so you can say Lightwell is surgical, not “upgrade everything.”
 
-### Optional: `cve-status.sh`
+### CVE reference table (real IDs, demo status only)
 
-`./scripts/cve-status.sh` is **not a scanner**. It prints a fixed demo catalog that matches the UI / `/api/status` story:
+| CVE | Library in this demo | One-line context | Read more |
+|-----|----------------------|------------------|-----------|
+| [CVE-2022-22965](https://nvd.nist.gov/vuln/detail/CVE-2022-22965) | Spring Framework | “Spring4Shell” — remote code execution class of issue in Spring MVC on certain JDK/Tomcat setups | [NVD](https://nvd.nist.gov/vuln/detail/CVE-2022-22965) · [Spring advisory](https://spring.io/security/cve-2022-22965) |
+| [CVE-2023-20860](https://nvd.nist.gov/vuln/detail/CVE-2023-20860) | Spring Framework | Pattern-matching mismatch between Spring Security and Spring MVC (`**` patterns) → possible security bypass | [NVD](https://nvd.nist.gov/vuln/detail/CVE-2023-20860) · [Spring advisory](https://spring.io/security/cve-2023-20860) |
+| [CVE-2023-20863](https://nvd.nist.gov/vuln/detail/CVE-2023-20863) | Spring Framework | Spring Expression DoS / resource issues in affected 5.3.x / 6.0.x lines | [NVD](https://nvd.nist.gov/vuln/detail/CVE-2023-20863) · [Spring advisory](https://spring.io/security/cve-2023-20863) |
+| [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003) | Jackson Databind | Deeply nested arrays can cause resource exhaustion when certain features are enabled | [NVD](https://nvd.nist.gov/vuln/detail/CVE-2022-42003) |
+| [CVE-2022-42889](https://nvd.nist.gov/vuln/detail/CVE-2022-42889) | Apache Commons Text | “Text4Shell” — unsafe interpolation in Commons Text string lookup | [NVD](https://nvd.nist.gov/vuln/detail/CVE-2022-42889) |
+
+In the **demo catalog**, the three Spring rows flip to REMEDIATED after Stage 2; the Jackson and Commons Text rows **never** flip (pins unchanged).
+
+### Optional: `cve-status.sh` — expected output
+
+Skip this if you only care about build + Nexus. Use it for a terminal before/after in the talk track.
+
+**Before** (`community` — Spring `5.3.18`):
 
 ```bash
-./scripts/cve-status.sh community   # before: Spring rows VULNERABLE
-./scripts/cve-status.sh lightwell   # after:  Spring rows REMEDIATED
+./scripts/cve-status.sh community
 ```
 
-Skip it if you only care about build + Nexus. Use it when you want a terminal before/after for the talk track.
+```text
+=== ACME Order Hub — demo CVE status ===
+Maven profile (expected): community
+Build profile label:      community
+
+Pinned versions:
+  Spring Framework:     5.3.18
+  jackson-databind:     2.13.4.2
+  commons-text:         1.9
+
+Representative CVEs (demo catalog only):
+  CVE-2022-22965       Spring Framework       VULNERABLE
+  CVE-2023-20860       Spring Framework       VULNERABLE
+  CVE-2023-20863       Spring Framework       VULNERABLE
+  CVE-2022-42003       Jackson Databind       VULNERABLE
+  CVE-2022-42889       Apache Commons Text    VULNERABLE
+
+Resolved Spring version from Maven (optional verify):
+  5.3.18
+```
+
+**After** (`lightwell` — Spring `5.3.18.rhlw-00010`):
+
+```bash
+./scripts/cve-status.sh lightwell
+```
+
+```text
+=== ACME Order Hub — demo CVE status ===
+Maven profile (expected): lightwell
+Build profile label:      lightwell-remediated
+
+Pinned versions:
+  Spring Framework:     5.3.18.rhlw-00010
+  jackson-databind:     2.13.4.2
+  commons-text:         1.9
+
+Representative CVEs (demo catalog only):
+  CVE-2022-22965       Spring Framework       REMEDIATED
+  CVE-2023-20860       Spring Framework       REMEDIATED
+  CVE-2023-20863       Spring Framework       REMEDIATED
+  CVE-2022-42003       Jackson Databind       VULNERABLE
+  CVE-2022-42889       Apache Commons Text    VULNERABLE
+
+Resolved Spring version from Maven (optional verify):
+  5.3.18.rhlw-00010
+```
+
+(If the optional “Resolved Spring version” line is blank or fails for `lightwell`, you may not have Nexus settings / fake `.rhlw` artifacts yet — the **catalog rows above still print** from the hardcoded story. Upload to `lightwell-java-remediated` and use `maven/settings-nexus.xml` for a full resolve check.)
+
+What changed between the two outputs: only Spring’s version and the three Spring status labels. Jackson and Commons Text versions and statuses are identical — that’s the surgical-remediation punchline.
 
 ## Stage 1 — Build the app normally
 
