@@ -7,12 +7,13 @@
 1. [Prerequisites](#prerequisites)
 2. [How the pieces fit](#how-the-pieces-fit)
 3. [Repositories (match shared Nexus)](#repositories-match-shared-nexus)
-4. [Stage 1 — Build the app normally](#stage-1--build-the-app-normally)
-5. [Already have Nexus?](#already-have-nexus)
-6. [Stage 2 — Lightwell through Nexus (fake package)](#stage-2--lightwell-through-nexus-fake-package)
-7. [Optional: provision Nexus with Ansible](#optional-provision-nexus-with-ansible)
-8. [Story libraries](#story-libraries)
-9. [Docs](#docs)
+4. [Demo story (before / after)](#demo-story-before--after)
+5. [Stage 1 — Build the app normally](#stage-1--build-the-app-normally)
+6. [Already have Nexus?](#already-have-nexus)
+7. [Stage 2 — Lightwell through Nexus (fake package)](#stage-2--lightwell-through-nexus-fake-package)
+8. [Optional: provision Nexus with Ansible](#optional-provision-nexus-with-ansible)
+9. [Story libraries](#story-libraries)
+10. [Docs](#docs)
 
 ## Prerequisites
 
@@ -89,17 +90,40 @@ Ignore unrelated defaults (`nuget-*`, `pypi-*`, `maven-snapshots`, `maven-all`, 
 
 Full command blocks: [Already have Nexus?](#already-have-nexus) and [Stage 2](#stage-2--lightwell-through-nexus-fake-package).
 
+## Demo story (before / after)
+
+The pitch is surgical remediation: pin Spring forever, then swap in a Lightwell build of the **same** version line through Nexus — no app code rewrite.
+
+| Beat | What you show | Spring version | Spring CVEs in the demo |
+|------|----------------|----------------|-------------------------|
+| **Before** (Stage 1) | Build from community packages | `5.3.18` | VULNERABLE |
+| **After** (Stage 2) | Same app, resolve via Nexus Lightwell hosted | `5.3.18.rhlw-00010` | REMEDIATED |
+
+Jackson and Commons Text stay **VULNERABLE** on purpose — this demo only remediates Spring, so you can say “Lightwell fixed the library we chose, not everything at once.”
+
+### Optional: `cve-status.sh`
+
+`./scripts/cve-status.sh` is **not a scanner**. It prints a fixed demo catalog that matches the UI / `/api/status` story:
+
+```bash
+./scripts/cve-status.sh community   # before: Spring rows VULNERABLE
+./scripts/cve-status.sh lightwell   # after:  Spring rows REMEDIATED
+```
+
+Skip it if you only care about build + Nexus. Use it when you want a terminal before/after for the talk track.
+
 ## Stage 1 — Build the app normally
 
 Community Spring Framework `5.3.18` from public Central. No Nexus required.
 
 ```bash
-./scripts/cve-status.sh community
 ./mvnw -Pcommunity package
 java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
 ```
 
-Open http://localhost:8080
+Open http://localhost:8080 — the console shows the same before/after CVE story as the optional script.
+
+Optional talk-track printout: `./scripts/cve-status.sh community`
 
 ## Already have Nexus?
 
@@ -159,12 +183,13 @@ Confirm in Nexus **Browse** → `lightwell-java-remediated` → `org/springframe
 Requires `maven/settings-nexus.xml` from [Already have Nexus? §B](#b-point-builds-at-nexus-optional-for-stage-1).
 
 ```bash
-./scripts/cve-status.sh lightwell
 ./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package
 java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
 ```
 
 Only the Spring version property changes (`5.3.18` → `5.3.18.rhlw-00010`). Application code is unchanged.
+
+Optional talk-track printout (Spring rows should now say REMEDIATED): `./scripts/cve-status.sh lightwell`
 
 ### 3. Re-publish the remediated build (optional)
 
