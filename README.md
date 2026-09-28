@@ -6,7 +6,7 @@
 
 1. [Prerequisites](#prerequisites)
 2. [How the pieces fit](#how-the-pieces-fit)
-3. [Repositories to create](#repositories-to-create)
+3. [Repositories (match shared Nexus)](#repositories-match-shared-nexus)
 4. [Stage 1 — Build the app normally](#stage-1--build-the-app-normally)
 5. [Already have Nexus?](#already-have-nexus)
 6. [Stage 2 — Lightwell through Nexus (fake package)](#stage-2--lightwell-through-nexus-fake-package)
@@ -25,15 +25,15 @@
 
 ## How the pieces fit
 
-**Nexus layout** — how dependency resolution is wired. Publish target sits aside (not in the group).
+**Nexus layout** — how dependency resolution is wired. App publish uses stock `maven-releases` (not a member of `maven-public`).
 
 ```mermaid
 flowchart TB
-  Central["Public Java registry (Central)"] -->|"upstream"| Proxy["proxy: central"]
-  Mock["hosted: lightwell-java-remediated-mock"] -->|"searched first"| Group["group: public"]
+  Central["Public Java registry (Central)"] -->|"upstream"| Proxy["proxy: maven-central"]
+  Mock["hosted: lightwell-java-remediated"] -->|"searched first"| Group["group: maven-public"]
   Proxy -->|"fallback"| Group
   Build["App build"] -->|"resolves from"| Group
-  AppRepo["hosted: acme-releases"] -.->|"not a member of public"| Group
+  AppRepo["hosted: maven-releases"] -.->|"not a member of maven-public"| Group
 ```
 
 **How packages and the app JAR move** — same Nexus; three different paths:
@@ -45,9 +45,9 @@ flowchart LR
   Publish["publish-app-to-nexus.sh"] -->|"publishes app JAR"| AppRepo
 
   subgraph Nexus
-    Mock["hosted: lightwell-java-remediated-mock"]
-    Group["group: public"]
-    AppRepo["hosted: acme-releases"]
+    Mock["hosted: lightwell-java-remediated"]
+    Group["group: maven-public"]
+    AppRepo["hosted: maven-releases"]
   end
 ```
 
@@ -58,35 +58,33 @@ flowchart TD
   S1["Stage 1: build community"] --> Run1["Run JAR locally"]
   S1 --> Pub1["Optional: publish JAR"]
   S1 -->|"next"| Prep["Upload fake Lightwell packages"]
-  Prep --> S2["Stage 2: build lightwell via public"]
+  Prep --> S2["Stage 2: build lightwell via maven-public"]
   S2 --> Run2["Run remediated JAR"]
   S2 --> Pub2["Optional: re-publish JAR"]
 ```
 
-Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-java-remediated-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell searched first, Central as fallback). `acme-releases` holds the app JAR only — it is **not** a member of `public`.
+Use the **stock** Nexus names (`maven-central`, `maven-public`, `maven-releases`) plus the shared **`lightwell-java-remediated`** hosted repo — no duplicate `central` / `public` / `acme-releases` repos.
 
-## Repositories to create
+## Repositories (match shared Nexus)
 
-Do this in Nexus UI: **Admin → Repositories → Create repository**.
+These usually **already exist**. Do not create second copies with different names.
 
-In the create dialog, pick the Java package recipe Nexus labels **maven2** (JAR layout name only — not a build-tool install). Then create each row:
+| Name | Type | On shared Nexus | What you do |
+|------|------|-----------------|-------------|
+| `maven-central` | **proxy** | stock default | Leave as-is (remote = Central) |
+| `lightwell-java-remediated` | **hosted** | colleague / Lightwell | Upload fake `.rhlw` packages here (`upload-mock-to-nexus.sh`) |
+| `maven-releases` | **hosted** | stock default | Publish the ACME app JAR here (`publish-app-to-nexus.sh`) |
+| `maven-public` | **group** | stock default | **Edit members** so order is: (1) `lightwell-java-remediated`, (2) `maven-central` (keep other members after if you want) |
 
-| # | Name | Type | Settings / what you do |
-|---|------|------|------------------------|
-| 1 | `central` | **proxy** | Remote URL: `https://repo1.maven.org/maven2/` (public Java registry address) |
-| 2 | `lightwell-java-remediated-mock` | **hosted** | Version policy: **Release**; write policy: **Allow** — fake Lightwell `.rhlw` packages land here |
-| 3 | `acme-releases` | **hosted** | Version policy: **Release**; write policy: **Allow** — ACME Order Hub app JAR lands here |
-| 4 | `public` | **group** | Members **in this order**: (1) `lightwell-java-remediated-mock`, (2) `central` — builds point at this group |
+Ignore unrelated defaults (`nuget-*`, `pypi-*`, `maven-snapshots`, `maven-all`, etc.) for this Java demo.
 
-Skip any name that already exists. If your names differ, keep them and override `NEXUS_REPO` / settings URLs later.
-
-### After the repos exist
+### After repos are wired
 
 | Step | Direction |
 |------|-----------|
-| Upload fake Lightwell | `./scripts/build-mock-lightwell-repo.sh` then `./scripts/upload-mock-to-nexus.sh` → repo `lightwell-java-remediated-mock` |
-| Publish app JAR | `./mvnw -Pcommunity package` then `./scripts/publish-app-to-nexus.sh` → repo `acme-releases` |
-| Point builds at Nexus | Copy `maven/settings-nexus.xml.example` → `maven/settings-nexus.xml`; set URL to `…/repository/public/` |
+| Upload fake Lightwell | `./scripts/build-mock-lightwell-repo.sh` then `./scripts/upload-mock-to-nexus.sh` → `lightwell-java-remediated` |
+| Publish app JAR | `./mvnw -Pcommunity package` then `./scripts/publish-app-to-nexus.sh` → `maven-releases` |
+| Point builds at Nexus | Copy `maven/settings-nexus.xml.example` → `maven/settings-nexus.xml`; URL `…/repository/maven-public/` |
 | Stage 2 build | `./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package` |
 
 Full command blocks: [Already have Nexus?](#already-have-nexus) and [Stage 2](#stage-2--lightwell-through-nexus-fake-package).
@@ -107,7 +105,7 @@ Open http://localhost:8080
 
 Use this path when Nexus is already running. You do **not** need Ansible provisioning.
 
-Create the four repos using the [Repositories to create](#repositories-to-create) table, then continue below.
+Confirm the [Repositories](#repositories-match-shared-nexus) table (especially `maven-public` member order), then continue below.
 
 ### A. Publish the app JAR into Nexus
 
@@ -117,18 +115,18 @@ Create the four repos using the [Repositories to create](#repositories-to-create
 export NEXUS_URL='http://<your-nexus-host>:8081'
 export NEXUS_USER='admin'
 export NEXUS_PASSWORD='...'
-export NEXUS_REPO='acme-releases'   # optional; this is the default
+export NEXUS_REPO='maven-releases'   # optional; this is the default
 
 ./scripts/publish-app-to-nexus.sh
 ```
 
-Browse: `http://<nexus-host>:8081` → **Browse** → `acme-releases` → `com/acme/lightwell-app`.
+Browse: `http://<nexus-host>:8081` → **Browse** → `maven-releases` → `com/acme/lightwell-app`.
 
 ### B. Point builds at Nexus (optional for Stage 1)
 
 ```bash
 cp maven/settings-nexus.xml.example maven/settings-nexus.xml
-# Set <url> to http://<nexus-host>:8081/repository/public/
+# Set <url> to http://<nexus-host>:8081/repository/maven-public/
 # Set <password> to your Nexus admin (or deploy user) password
 ```
 
@@ -140,7 +138,7 @@ Then:
 
 ## Stage 2 — Lightwell through Nexus (fake package)
 
-Demo simulation: republish Central Spring `5.3.18` jars as `5.3.18.rhlw-00010` into the Nexus **hosted** mock repo. Same idea as real Lightwell, without packages.redhat.com.
+Demo simulation: republish Central Spring `5.3.18` jars as `5.3.18.rhlw-00010` into the Nexus **hosted** Lightwell repo. Same idea as real Lightwell, without packages.redhat.com.
 
 ### 1. Stage and upload the fake Lightwell artifacts
 
@@ -150,11 +148,11 @@ Demo simulation: republish Central Spring `5.3.18` jars as `5.3.18.rhlw-00010` i
 export NEXUS_URL='http://<your-nexus-host>:8081'
 export NEXUS_USER='admin'
 export NEXUS_PASSWORD='...'
-# default repo: lightwell-java-remediated-mock
+# default repo: lightwell-java-remediated
 ./scripts/upload-mock-to-nexus.sh
 ```
 
-Confirm in Nexus **Browse** → `lightwell-java-remediated-mock` → `org/springframework/.../5.3.18.rhlw-00010/`.
+Confirm in Nexus **Browse** → `lightwell-java-remediated` → `org/springframework/.../5.3.18.rhlw-00010/`.
 
 ### 2. Build with the Lightwell profile (resolves via Nexus)
 
@@ -171,7 +169,7 @@ Only the Spring version property changes (`5.3.18` → `5.3.18.rhlw-00010`). App
 ### 3. Re-publish the remediated build (optional)
 
 ```bash
-NEXUS_REPO=acme-releases ./scripts/publish-app-to-nexus.sh
+NEXUS_REPO=maven-releases ./scripts/publish-app-to-nexus.sh
 ```
 
 ## Optional: provision Nexus with Ansible
@@ -189,14 +187,15 @@ ansible-vault create inventory/group_vars/nexus/vault.yml
 ansible-playbook -i inventory/hosts.yml playbooks/provision_nexus.yml
 ```
 
-Creates Podman Nexus, the repo layout above (except `acme-releases` — create that in UI or extend the role), and uploads the fake Lightwell artifacts.
+Creates Podman Nexus and aligns with the same repo names (`maven-central`, `maven-public`, `lightwell-java-remediated`, uploads fake `.rhlw` artifacts). Uses stock `maven-releases` for app publishing.
 
 ### Real Lightwell proxy (later)
 
-When you have Red Hat credentials for `packages.redhat.com`:
+When you have Red Hat credentials for `packages.redhat.com`, add a **separate** proxy (do not reuse the hosted name):
 
 ```yaml
 configure_lightwell_proxy: true
+nexus_repo_lightwell_proxy: lightwell-java-remediated-remote
 lightwell_repo_user: <service-account>
 lightwell_repo_token: <token>
 ```
@@ -205,8 +204,8 @@ Store those in vault; Nexus holds them on the proxy remote — not on developer 
 
 ## Story libraries
 
-| Library | Stage 1 (`community`) | Stage 2 (`lightwell` + Nexus mock) |
-|---------|----------------------|-------------------------------------|
+| Library | Stage 1 (`community`) | Stage 2 (`lightwell` + Nexus hosted) |
+|---------|----------------------|--------------------------------------|
 | Spring Framework | `5.3.18` | `5.3.18.rhlw-00010` (fake hosted) |
 | Jackson Databind | `2.13.4.2` | unchanged |
 | Apache Commons Text | `1.9` | unchanged |

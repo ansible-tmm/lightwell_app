@@ -1,6 +1,6 @@
 # Ansible — Nexus + Lightwell
 
-Provisions **Sonatype Nexus** with Lightwell-oriented repositories and optional fake `.rhlw` uploads. For day-to-day Stage 1 / Stage 2 builds against an **existing** Nexus, use the [root README](../README.md).
+Provisions **Sonatype Nexus** using the same repo names as a typical shared instance (`maven-central`, `maven-public`, `lightwell-java-remediated`). For day-to-day work against an **existing** Nexus, use the [root README](../README.md).
 
 ## Prerequisites
 
@@ -35,21 +35,21 @@ Or:
 ansible-playbook -i inventory/hosts.yml playbooks/site.yml
 ```
 
-Creates (Podman):
+Creates / aligns (Podman):
 
-- `central` proxy
-- `lightwell-java-remediated-mock` hosted (+ uploads fake `.rhlw` Spring artifacts when enabled)
-- `lightwell-java-remediated` proxy (when `configure_lightwell_proxy: true`)
-- `public` group
+- `maven-central` proxy
+- `lightwell-java-remediated` hosted (+ uploads fake `.rhlw` Spring artifacts when enabled)
+- `lightwell-java-remediated-remote` proxy (when `configure_lightwell_proxy: true`)
+- `maven-public` group
 
-Create `acme-releases` (hosted) in the Nexus UI to publish the application JAR.
+App JAR publishing uses stock `maven-releases`.
 
 ## Existing Nexus
 
-Prefer the [README “Already have Nexus?”](../README.md#already-have-nexus) steps (UI + scripts). If you still want Ansible against an existing host:
+Prefer the [README repositories table](../README.md#repositories-match-shared-nexus). If you still want Ansible against an existing host:
 
-1. Point inventory `nexus` at that host; skip container install or set vars accordingly.
-2. Override `nexus_repo_*` / `nexus_base_url` if names differ.
+1. Point inventory `nexus` at that host.
+2. Override `nexus_repo_*` / `nexus_base_url` only if names differ.
 3. Keep `upload_mock_artifacts_to_nexus: true` or run `scripts/upload-mock-to-nexus.sh` locally.
 
 ## Variables

@@ -110,7 +110,7 @@
     force_basic_auth: true
     body_format: json
     body:
-      name: "{{ nexus_repo_lightwell_mock }}"
+      name: "{{ nexus_repo_lightwell_hosted }}"
       online: true
       storage:
         blobStoreName: default
@@ -163,9 +163,9 @@
   ansible.builtin.set_fact:
     nexus_group_members: >-
       {{
-        [nexus_repo_lightwell_mock, nexus_repo_central]
+        [nexus_repo_lightwell_hosted, nexus_repo_central]
         if not (configure_lightwell_proxy | bool)
-        else [nexus_repo_lightwell_mock, nexus_repo_lightwell_proxy, nexus_repo_central]
+        else [nexus_repo_lightwell_hosted, nexus_repo_lightwell_proxy, nexus_repo_central]
       }}
 
 - name: Create public group repository
@@ -227,7 +227,7 @@
     chdir: "{{ app_root | default('/opt/acme/lightwell_app') }}"
   environment:
     NEXUS_URL: "{{ nexus_base_url }}"
-    NEXUS_REPO: "{{ nexus_repo_lightwell_mock }}"
+    NEXUS_REPO: "{{ nexus_repo_lightwell_hosted }}"
     NEXUS_USER: "{{ nexus_admin_user }}"
     NEXUS_PASSWORD: "{{ nexus_effective_admin_password }}"
   when: upload_mock_artifacts_to_nexus | bool

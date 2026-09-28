@@ -17,8 +17,8 @@
       <repositories>
         <repository>
           <id>nexus-public</id>
-          <name>Nexus public group</name>
-          <url>http://localhost:8081/repository/public/</url>
+          <name>Nexus maven-public group</name>
+          <url>http://localhost:8081/repository/maven-public/</url>
           <releases>
             <enabled>true</enabled>
           </releases>
@@ -30,7 +30,7 @@
       <pluginRepositories>
         <pluginRepository>
           <id>nexus-public</id>
-          <url>http://localhost:8081/repository/public/</url>
+          <url>http://localhost:8081/repository/maven-public/</url>
           <releases>
             <enabled>true</enabled>
           </releases>

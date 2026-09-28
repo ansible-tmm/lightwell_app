@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publish the ACME Order Hub JAR to a Nexus hosted repository (default: acme-releases).
+# Publish the ACME Order Hub JAR to a Nexus hosted repository (default: maven-releases).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -7,7 +7,7 @@ JAR="${ROOT}/target/lightwell-app-1.0.0-SNAPSHOT.jar"
 POM="${ROOT}/pom.xml"
 
 NEXUS_URL="${NEXUS_URL:-http://localhost:8081}"
-NEXUS_REPO="${NEXUS_REPO:-acme-releases}"
+NEXUS_REPO="${NEXUS_REPO:-maven-releases}"
 NEXUS_USER="${NEXUS_USER:-admin}"
 NEXUS_PASSWORD="${NEXUS_PASSWORD:-}"
 

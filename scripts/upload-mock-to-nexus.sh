@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload staged mock-repo/ artifacts to Nexus hosted repository (lightwell-java-remediated-mock).
+# Upload staged mock-repo/ artifacts to Nexus hosted repository (lightwell-java-remediated).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -7,7 +7,7 @@ MOCK_REPO="${ROOT}/mock-repo"
 GROUP_PATH="org/springframework"
 
 NEXUS_URL="${NEXUS_URL:-http://localhost:8081}"
-NEXUS_REPO="${NEXUS_REPO:-lightwell-java-remediated-mock}"
+NEXUS_REPO="${NEXUS_REPO:-lightwell-java-remediated}"
 NEXUS_USER="${NEXUS_USER:-admin}"
 NEXUS_PASSWORD="${NEXUS_PASSWORD:-}"
 
