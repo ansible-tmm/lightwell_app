@@ -5,10 +5,10 @@ nexus_http_port: 8081
 nexus_data_dir: /opt/nexus-data
 nexus_base_url: "http://{{ ansible_host | default('localhost') }}:{{ nexus_http_port }}"
 
-nexus_repo_maven_central: maven-central
+nexus_repo_central: central
 nexus_repo_lightwell_mock: lightwell-java-remediated-mock
 nexus_repo_lightwell_proxy: lightwell-java-remediated
-nexus_repo_maven_public: maven-public
+nexus_repo_public: public
 
 lightwell_remote_url: https://packages.redhat.com/lightwell/java/remediated/
 configure_lightwell_proxy: false

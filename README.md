@@ -17,7 +17,7 @@
 | Need | Stage 1 | Stage 2 / publish |
 |------|---------|-------------------|
 | JDK 11 | yes | yes |
-| `./mvnw` (wrapper in repo) | yes | yes |
+| Project build wrapper (`./mvnw`) | yes | yes |
 | Sonatype Nexus (existing or Ansible) | no | yes |
 | Nexus admin password | no | yes |
 
@@ -39,16 +39,18 @@ Use this path when Nexus is already running. You do **not** need Ansible provisi
 
 ### A. Create repositories (Nexus UI)
 
-Admin → **Repositories** → **Create repository**:
+Admin → **Repositories** → **Create repository**.
 
-| Name | Format / type | Notes |
-|------|---------------|--------|
-| `maven-central` | maven2 **proxy** | Remote URL: `https://repo1.maven.org/maven2/` |
-| `lightwell-java-remediated-mock` | maven2 **hosted** | Version policy: Release; write: Allow |
-| `acme-releases` | maven2 **hosted** | Holds the ACME Order Hub JAR |
-| `maven-public` | maven2 **group** | Members (order matters): `lightwell-java-remediated-mock`, then `maven-central` |
+In the create dialog, pick the Java package recipe Nexus labels **maven2** (that is only the JAR layout name in Nexus — you are not installing a build tool). Then choose type:
 
-Skip any row that already exists. Adjust names only if you also update the scripts / settings below.
+| Name | Type | Notes |
+|------|------|--------|
+| `central` | **proxy** | Remote URL: `https://repo1.maven.org/maven2/` |
+| `lightwell-java-remediated-mock` | **hosted** | Version policy: Release; write policy: Allow |
+| `acme-releases` | **hosted** | Holds the ACME Order Hub JAR |
+| `public` | **group** | Members (order matters): `lightwell-java-remediated-mock`, then `central` |
+
+Skip any row that already exists. If your Nexus already uses different names, keep them and override in scripts / settings below.
 
 ### B. Publish the app JAR into Nexus
 
@@ -69,7 +71,7 @@ Browse: `http://<nexus-host>:8081` → **Browse** → `acme-releases` → `com/a
 
 ```bash
 cp maven/settings-nexus.xml.example maven/settings-nexus.xml
-# Set <url> to http://<nexus-host>:8081/repository/maven-public/
+# Set <url> to http://<nexus-host>:8081/repository/public/
 # Set <password> to your Nexus admin (or deploy user) password
 ```
 
@@ -155,5 +157,5 @@ Store those in vault; Nexus holds them on the proxy remote — not on developer 
 ## Docs
 
 - [docs/nexus.md](docs/nexus.md) — repo layout, existing Nexus, variables
-- [docs/maven.md](docs/maven.md) — profiles and wrapper
+- [docs/maven.md](docs/maven.md) — build profiles and wrapper
 - [ansible/README.md](ansible/README.md) — Ansible provision details

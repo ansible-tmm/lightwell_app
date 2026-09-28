@@ -70,7 +70,7 @@
     - nexus_initial_pw.stdout | length > 0
   no_log: true
 
-- name: Create Maven Central proxy repository
+- name: Create Central proxy repository
   ansible.builtin.uri:
     url: "{{ nexus_base_url }}/service/rest/v1/repositories/maven/proxy"
     method: POST
@@ -79,7 +79,7 @@
     force_basic_auth: true
     body_format: json
     body:
-      name: "{{ nexus_repo_maven_central }}"
+      name: "{{ nexus_repo_central }}"
       online: true
       storage:
         blobStoreName: default
@@ -159,16 +159,16 @@
   register: repo_lw
   changed_when: repo_lw.status == 201
 
-- name: Build maven-public group member list
+- name: Build public group member list
   ansible.builtin.set_fact:
     nexus_group_members: >-
       {{
-        [nexus_repo_lightwell_mock, nexus_repo_maven_central]
+        [nexus_repo_lightwell_mock, nexus_repo_central]
         if not (configure_lightwell_proxy | bool)
-        else [nexus_repo_lightwell_mock, nexus_repo_lightwell_proxy, nexus_repo_maven_central]
+        else [nexus_repo_lightwell_mock, nexus_repo_lightwell_proxy, nexus_repo_central]
       }}
 
-- name: Create maven-public group repository
+- name: Create public group repository
   ansible.builtin.uri:
     url: "{{ nexus_base_url }}/service/rest/v1/repositories/maven/group"
     method: POST
@@ -177,7 +177,7 @@
     force_basic_auth: true
     body_format: json
     body:
-      name: "{{ nexus_repo_maven_public }}"
+      name: "{{ nexus_repo_public }}"
       online: true
       storage:
         blobStoreName: default

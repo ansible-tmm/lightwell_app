@@ -37,10 +37,10 @@ ansible-playbook -i inventory/hosts.yml playbooks/site.yml
 
 Creates (Podman):
 
-- `maven-central` proxy
+- `central` proxy
 - `lightwell-java-remediated-mock` hosted (+ uploads fake `.rhlw` Spring artifacts when enabled)
 - `lightwell-java-remediated` proxy (when `configure_lightwell_proxy: true`)
-- `maven-public` group
+- `public` group
 
 Create `acme-releases` (hosted) in the Nexus UI to publish the application JAR.
 

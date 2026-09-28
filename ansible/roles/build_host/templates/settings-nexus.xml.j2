@@ -15,8 +15,8 @@
       <repositories>
         <repository>
           <id>nexus-public</id>
-          <name>Nexus maven-public</name>
-          <url>{{ nexus_base_url }}/repository/{{ nexus_repo_maven_public }}/</url>
+          <name>Nexus public group</name>
+          <url>{{ nexus_base_url }}/repository/{{ nexus_repo_public }}/</url>
           <releases>
             <enabled>true</enabled>
           </releases>
@@ -28,7 +28,7 @@
       <pluginRepositories>
         <pluginRepository>
           <id>nexus-public</id>
-          <url>{{ nexus_base_url }}/repository/{{ nexus_repo_maven_public }}/</url>
+          <url>{{ nexus_base_url }}/repository/{{ nexus_repo_public }}/</url>
           <releases>
             <enabled>true</enabled>
           </releases>

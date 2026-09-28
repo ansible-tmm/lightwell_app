@@ -68,12 +68,12 @@ public class OrderController {
         boolean lightwellSpring = springFrameworkVersion.contains("rhlw");
         String springRepo = lightwellSpring
                 ? "Nexus (Lightwell remediated hosted/proxy)"
-                : "Nexus (Maven Central proxy)";
+                : "Nexus (Central proxy)";
 
         List<Map<String, String>> dependencies = List.of(
                 dep("Spring Framework", "org.springframework:spring-webmvc", springFrameworkVersion, springRepo),
-                dep("Jackson Databind", "com.fasterxml.jackson.core:jackson-databind", jacksonVersion, "Nexus (Maven Central proxy)"),
-                dep("Apache Commons Text", "org.apache.commons:commons-text", commonsTextVersion, "Nexus (Maven Central proxy)"));
+                dep("Jackson Databind", "com.fasterxml.jackson.core:jackson-databind", jacksonVersion, "Nexus (Central proxy)"),
+                dep("Apache Commons Text", "org.apache.commons:commons-text", commonsTextVersion, "Nexus (Central proxy)"));
 
         List<Map<String, String>> cves = VulnerabilityCatalog.rowsFor(springFrameworkVersion).stream()
                 .map(row -> {

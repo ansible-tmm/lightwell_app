@@ -5,7 +5,7 @@
       "visual": "./mvnw -Pcommunity package\nspring-framework = 5.3.18\nSpring CVEs: VULNERABLE"
     },
     {
-      "text": "Stage 2 prep: In Nexus, host a fake Lightwell package (5.3.18.rhlw-00010) and include it in maven-public. Optionally publish the app JAR to acme-releases.",
+      "text": "Stage 2 prep: In Nexus, host a fake Lightwell package (5.3.18.rhlw-00010) and include it in the public group. Optionally publish the app JAR to acme-releases.",
       "visual": "Nexus hosted: lightwell-java-remediated-mock\nupload-mock-to-nexus.sh\npublish-app-to-nexus.sh → acme-releases"
     },
     {

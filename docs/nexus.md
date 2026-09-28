@@ -8,11 +8,13 @@ For the staged walkthrough (build normally → Lightwell via Nexus), start with 
 
 | Nexus repo | Type | Purpose |
 |------------|------|---------|
-| `maven-central` | proxy | Upstream Maven Central |
+| `central` | proxy | Upstream Central (`repo1.maven.org`) |
 | `lightwell-java-remediated-mock` | hosted | Fake `.rhlw-00010` Spring modules for demos |
 | `lightwell-java-remediated` | proxy | Optional real remote `packages.redhat.com/lightwell/java/remediated/` |
-| `maven-public` | group | Members ordered: mock → (optional RH proxy) → central |
+| `public` | group | Members ordered: mock → (optional RH proxy) → central |
 | `acme-releases` | hosted | ACME Order Hub application JAR (create in UI) |
+
+When creating repos in the Nexus UI, choose the Java package recipe Nexus labels **maven2** (JAR layout only).
 
 ## Already have Nexus
 
@@ -33,7 +35,7 @@ export NEXUS_PASSWORD='...'
 NEXUS_URL='http://<nexus-host>:8081' NEXUS_PASSWORD='...' ./scripts/publish-app-to-nexus.sh
 ```
 
-4. Point builds at `maven-public` via `maven/settings-nexus.xml` (from `settings-nexus.xml.example`).
+4. Point builds at the `public` group via `maven/settings-nexus.xml` (from `settings-nexus.xml.example`).
 
 Scripts talk to the Nexus REST API with `curl`.
 
@@ -49,7 +51,7 @@ cp inventory/hosts.example.yml inventory/hosts.yml
 ansible-playbook -i inventory/hosts.yml playbooks/provision_nexus.yml
 ```
 
-Installs Nexus (Podman), creates Central / Lightwell mock / group, and uploads fake `.rhlw` artifacts. Create `acme-releases` in the UI for app publishing.
+Installs Nexus (Podman), creates `central` / Lightwell mock / `public` group, and uploads fake `.rhlw` artifacts. Create `acme-releases` in the UI for app publishing.
 
 ## Real Lightwell proxy
 

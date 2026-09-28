@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - **JDK 11**
-- **Maven Wrapper** (`./mvnw`)
+- Project build wrapper (`./mvnw`)
 
 ## Stage 1 — community (default)
 
@@ -20,7 +20,7 @@ No Nexus required:
 
 ```bash
 cp maven/settings-nexus.xml.example maven/settings-nexus.xml
-# Edit Nexus URL + password
+# Edit Nexus URL (…/repository/public/) + password
 ```
 
 3. Build:
@@ -31,10 +31,10 @@ cp maven/settings-nexus.xml.example maven/settings-nexus.xml
 
 | Profile | Spring version | Where it resolves |
 |---------|----------------|-------------------|
-| `community` | `5.3.18` | Central (or Nexus → central) |
+| `community` | `5.3.18` | Central (or Nexus → `central`) |
 | `lightwell` | `5.3.18.rhlw-00010` | Nexus hosted mock (or real Lightwell proxy) |
 
-Repositories for Stage 2 are **not** declared in `pom.xml`; they live in `settings-nexus.xml`.
+Repositories for Stage 2 are **not** declared in `pom.xml`; they live in `settings-nexus.xml` pointing at the Nexus `public` group.
 
 ## Publish JAR to Nexus
 
