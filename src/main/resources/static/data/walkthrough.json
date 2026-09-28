@@ -1,20 +1,20 @@
 {
   "steps": [
     {
-      "text": "Stage 1 (this build if you used -Pcommunity): ACME pins Spring Framework 5.3.18 from community packages. The demo catalog marks representative Spring CVEs as VULNERABLE.",
-      "visual": "Build: ./mvnw -Pcommunity package\nSpring = 5.3.18\nJackson / Commons Text pins unchanged\nCVE table = story prop (not a scanner)"
+      "text": "Before (Stage 1): this running app used community Spring 5.3.18. The demo CVE table marks Spring as VULNERABLE. That table is a story prop — not a live scan.",
+      "visual": "This build\n  Spring = 5.3.18 (community)\n  Jackson / Commons Text = unchanged pins\n  Spring CVE rows = VULNERABLE (demo labels)"
     },
     {
-      "text": "Wire Nexus once: put fake Lightwell packages in lightwell-java-remediated and search that repo first in maven-public. Optionally publish the app JAR to maven-releases.",
-      "visual": "maven-public members (order):\n  1. lightwell-java-remediated\n  2. maven-central (and other stock members)\n\nupload-mock-to-nexus.sh → Lightwell hosted"
+      "text": "What Lightwell changes in the story: only Spring moves to a remediated build (5.3.18.rhlw-00010). Jackson and Commons Text stay as-is on purpose — surgical remediation, not “fix everything.”",
+      "visual": "Spring  5.3.18  →  5.3.18.rhlw-00010\nJackson / Commons Text  →  no version change\nSpring CVE labels  →  REMEDIATED\nOther CVE labels  →  still VULNERABLE"
     },
     {
-      "text": "Stage 2: rebuild with the lightwell profile. Only the Spring version becomes 5.3.18.rhlw-00010. Spring CVE rows flip to REMEDIATED; Jackson and Commons Text stay VULNERABLE on purpose.",
-      "visual": "./mvnw -Plightwell -s maven/settings-nexus.xml\n5.3.18 → 5.3.18.rhlw-00010\nSpring CVEs → REMEDIATED\nOther pins → still VULNERABLE (surgical)"
+      "text": "Where that remediated Spring comes from: Nexus hosts it (lightwell-java-remediated) and the maven-public group is set to look there before Central. You already configured that in the Nexus UI.",
+      "visual": "Nexus (dependencies)\n  lightwell-java-remediated  ← fake .rhlw packages\n  maven-public               ← group builds ask first\n  maven-central              ← fallback\n\nSeparate (optional): maven-releases stores the app JAR"
     },
     {
-      "text": "Same order API, same application code. Lightwell entered through Nexus — not a rewrite of ACME Order Hub.",
-      "visual": "App code: unchanged\nResolve path: Nexus maven-public\nStory: pin forever, remediate the library you choose"
+      "text": "This walkthrough does not rebuild the app. To see Stage 2 for real: stop this server (Ctrl+C), follow README Stage 2 (upload packages if needed, rebuild with the lightwell profile, run the new JAR). Then Spring in the banner should show .rhlw and Spring CVE rows flip to REMEDIATED.",
+      "visual": "Do later (README → Stage 2)\n  1. Stop this java -jar process\n  2. Upload fake Lightwell packages (if not done)\n  3. Rebuild with lightwell profile + Nexus settings\n  4. Start the new JAR\n\nUntil then, this UI stays on the Stage 1 build."
     }
   ]
 }

@@ -31,8 +31,8 @@
     </section>
 
     <section class="actions-row">
-      <button type="button" id="walkthrough-btn" class="btn btn-primary">▶ Walk through before → after</button>
-      <p class="sim-disclaimer">Primary demo path: simulated Stage 1 → Stage 2 story. Live versions and CVE labels come from this running build (banner above).</p>
+      <button type="button" id="walkthrough-btn" class="btn btn-primary">▶ Story: before → after</button>
+      <p class="sim-disclaimer">Story only — does not rebuild this running app. Real Stage 2 steps are in <code>README.md</code> (stop server, rebuild, restart).</p>
     </section>
 
     <section class="section-head">
@@ -53,15 +53,13 @@
 
     <section class="card what-changed">
       <h2>What Lightwell changes</h2>
-      <p>Stage 1 builds normally from community packages. Stage 2 resolves a remediated Spring version through Nexus (<code>lightwell-java-remediated</code> first in <code>maven-public</code>).</p>
-      <pre class="diff"><code>Stage 1
-  ./mvnw -Pcommunity package
+      <p>Stage 1 is this community build. Stage 2 is a <strong>separate rebuild</strong> (stop the server, follow README Stage 2, start the new JAR). This page only reflects whatever JAR is running now.</p>
+      <pre class="diff"><code>This JAR (live banner above)
+  Spring version baked in at build time
 
-Stage 2 (Nexus)
-+ lightwell-java-remediated (fake .rhlw for demos)
-+ maven-public searches Lightwell first
-  5.3.18 → 5.3.18.rhlw-00010</code></pre>
-      <p>See <code>README.md</code> for repos, Stage 1 / Stage 2, and the CVE talk track.</p>
+To flip Spring → .rhlw (Stage 2)
+  stop server → README Stage 2 → new JAR</code></pre>
+      <p>See <code>README.md</code> for Nexus repos, upload, and the lightwell rebuild commands.</p>
     </section>
 
     <details class="card playground-details" id="playground">
@@ -81,7 +79,7 @@ Stage 2 (Nexus)
 
   <div id="walkthrough-overlay" class="overlay hidden" role="dialog" aria-labelledby="wt-title" aria-modal="true">
     <div class="overlay-panel">
-      <p class="wt-kicker">Simulated walkthrough</p>
+      <p class="wt-kicker">Story walkthrough · not a rebuild</p>
       <h2 id="wt-title">Before → after</h2>
       <p id="wt-step-text"></p>
       <div id="wt-visual" class="wt-visual"></div>
