@@ -1,22 +1,34 @@
 (function () {
   const bannerEl = document.getElementById('build-banner');
+  const chipEl = document.getElementById('build-chip');
   const depsEl = document.getElementById('deps');
   const cveEl = document.getElementById('cve-list');
   const form = document.getElementById('order-form');
   const resultEl = document.getElementById('order-result');
-  const WT_KEY = 'acme-wt-offered';
+  const resultWrap = document.getElementById('order-result-wrap');
 
   function renderStatus(data) {
     const isLw = !!(data.lightwellActive || (data.springFrameworkVersion && data.springFrameworkVersion.includes('rhlw')));
-    bannerEl.className = 'build-banner ' + (isLw ? 'lightwell' : 'community');
     const verClass = isLw ? 'version rhlw' : 'version';
     const kicker = isLw
       ? 'Stage 2 build — Lightwell Spring via Nexus'
       : 'Stage 1 build — community packages (before Lightwell)';
-    bannerEl.innerHTML =
-      '<span class="banner-kicker">' + escapeHtml(kicker) + '</span>' +
-      '<strong>Built from:</strong> ' + escapeHtml(data.buildProfile) +
-      ' &nbsp;|&nbsp; <span class="' + verClass + '">Spring ' + escapeHtml(data.springFrameworkVersion) + '</span>';
+
+    if (chipEl) {
+      chipEl.className = 'build-chip ' + (isLw ? 'lightwell' : 'community');
+      chipEl.textContent = (isLw ? 'Lightwell · ' : 'Community · ') + 'Spring ' + data.springFrameworkVersion;
+      chipEl.title = 'Open “About this demo” for dependency and CVE details';
+    }
+
+    if (bannerEl) {
+      bannerEl.className = 'build-banner ' + (isLw ? 'lightwell' : 'community');
+      bannerEl.innerHTML =
+        '<span class="banner-kicker">' + escapeHtml(kicker) + '</span>' +
+        '<strong>Built from:</strong> ' + escapeHtml(data.buildProfile) +
+        ' &nbsp;|&nbsp; <span class="' + verClass + '">Spring ' + escapeHtml(data.springFrameworkVersion) + '</span>';
+    }
+
+    if (!depsEl || !cveEl) return;
 
     depsEl.innerHTML = '';
     (data.dependencies || []).forEach(function (dep) {
@@ -66,7 +78,7 @@
     const unchanged = row.storyRole === 'UNCHANGED_PIN';
     div.className = 'cve-row ' + (unchanged ? 'unchanged' : 'target');
     const url = row.nvdUrl || ('https://nvd.nist.gov/vuln/detail/' + row.cveId);
-    const roleLabel = unchanged ? 'pin unchanged' : (row.status === 'REMEDIATED' ? 'remediated in Stage 2' : 'flips in Stage 2');
+    const roleLabel = unchanged ? 'pin unchanged' : (row.status === 'REMEDIATED' ? 'remediated after Stage 2 rebuild' : 'flips after Stage 2 rebuild');
     div.innerHTML =
       '<span class="chip ' + escapeHtml(row.status) + '">' + escapeHtml(row.status) + '</span>' +
       '<a class="cve-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
@@ -87,12 +99,10 @@
 
   fetch('/api/status')
     .then(function (r) { return r.json(); })
-    .then(function (data) {
-      renderStatus(data);
-      maybeOfferWalkthrough();
-    })
+    .then(renderStatus)
     .catch(function () {
-      bannerEl.textContent = 'Could not load /api/status';
+      if (chipEl) chipEl.textContent = 'Status unavailable';
+      if (bannerEl) bannerEl.textContent = 'Could not load /api/status';
     });
 
   form.addEventListener('submit', function (e) {
@@ -110,11 +120,11 @@
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        resultEl.hidden = false;
+        resultWrap.hidden = false;
         resultEl.textContent = JSON.stringify(data, null, 2);
       })
       .catch(function (err) {
-        resultEl.hidden = false;
+        resultWrap.hidden = false;
         resultEl.textContent = String(err);
       });
   });
@@ -123,6 +133,7 @@
   const wtText = document.getElementById('wt-step-text');
   const wtVisual = document.getElementById('wt-visual');
   const wtNext = document.getElementById('wt-next');
+  const wtBtn = document.getElementById('walkthrough-btn');
   let wtSteps = [];
   let wtIndex = 0;
 
@@ -147,7 +158,6 @@
       wtIndex = 0;
       overlay.classList.remove('hidden');
       showWtStep();
-      try { sessionStorage.setItem(WT_KEY, '1'); } catch (e) { /* ignore */ }
     });
   }
 
@@ -156,19 +166,9 @@
     wtIndex = 0;
   }
 
-  function maybeOfferWalkthrough() {
-    try {
-      if (sessionStorage.getItem(WT_KEY)) return;
-    } catch (e) {
-      return;
-    }
-    window.setTimeout(function () {
-      if (!overlay.classList.contains('hidden')) return;
-      openWalkthrough();
-    }, 700);
+  if (wtBtn) {
+    wtBtn.addEventListener('click', openWalkthrough);
   }
-
-  document.getElementById('walkthrough-btn').addEventListener('click', openWalkthrough);
   document.getElementById('wt-skip').addEventListener('click', closeWalkthrough);
   wtNext.addEventListener('click', function () {
     wtIndex += 1;

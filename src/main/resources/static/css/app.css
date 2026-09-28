@@ -51,8 +51,8 @@ a {
 
 .brand-block {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: baseline;
+  gap: 0.65rem;
 }
 
 .acme-logo {
@@ -62,27 +62,36 @@ a {
   font-size: 1.05rem;
 }
 
-.brand-divider {
-  width: 1px;
-  height: 1.1rem;
-  background: var(--border);
-}
-
-.lightwell-mark {
-  font-size: 0.8rem;
+.product-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
   font-weight: 600;
-  color: #fecaca;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  color: var(--text);
 }
 
-.lightwell-credit {
-  font-size: 0.85rem;
+.build-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
   color: var(--muted);
+  max-width: min(100%, 22rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.lightwell-credit a {
-  color: #fca5a5;
+.build-chip.community {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.build-chip.lightwell {
+  border-color: rgba(94, 234, 212, 0.4);
+  color: var(--ok);
 }
 
 main {
@@ -92,33 +101,128 @@ main {
 }
 
 .hero {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   animation: rise 0.55s ease-out both;
 }
 
-.hero-eyebrow {
-  margin: 0 0 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #fca5a5;
-}
-
-.hero h1 {
+.app-hero h1 {
   margin: 0 0 0.4rem;
   font-family: var(--font-display);
-  font-size: clamp(2.1rem, 4vw, 2.75rem);
+  font-size: clamp(2.25rem, 4.5vw, 3rem);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.15;
+  line-height: 1.12;
 }
 
 .tagline {
   color: var(--muted);
   margin: 0;
-  max-width: 38rem;
-  font-size: 1.05rem;
+  max-width: 34rem;
+  font-size: 1.08rem;
+}
+
+.app-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem 1.5rem 1.35rem;
+  margin-bottom: 1.75rem;
+  animation: rise 0.55s ease-out 0.08s both;
+}
+
+.app-panel h2 {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.order-form {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 28rem;
+}
+
+.order-form label {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.order-form input {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+}
+
+.order-result-wrap {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.order-result-wrap h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.demo-drawer {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0;
+  margin-bottom: 1.5rem;
+  animation: rise 0.55s ease-out 0.16s both;
+}
+
+.demo-drawer > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.demo-drawer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.demo-drawer .summary-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.demo-drawer .summary-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.demo-drawer[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.demo-drawer-body {
+  padding: 1.25rem;
+}
+
+.demo-intro {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: 0 0 1.25rem;
+  max-width: 42rem;
+}
+
+.demo-intro a {
+  color: #fca5a5;
 }
 
 .build-banner {
@@ -390,58 +494,6 @@ main {
   margin: 0.75rem 0;
 }
 
-.playground-details {
-  margin-bottom: 1.5rem;
-}
-
-.playground-details summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.playground-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.playground-details .summary-title {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.playground-details .summary-hint {
-  font-size: 0.85rem;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.playground-details[open] summary {
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border);
-}
-
-#playground label {
-  display: block;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-}
-
-#playground input {
-  display: block;
-  width: 100%;
-  max-width: 320px;
-  margin-top: 0.25rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-}
 
 .btn {
   cursor: pointer;

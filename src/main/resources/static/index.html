@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ACME Order Hub · Lightwell demo</title>
+  <title>ACME Order Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
@@ -13,67 +13,77 @@
   <header class="top-bar">
     <div class="brand-block">
       <span class="acme-logo">ACME</span>
-      <span class="brand-divider" aria-hidden="true"></span>
-      <span class="lightwell-mark">Lightwell demo</span>
+      <span class="product-name">Order Hub</span>
     </div>
-    <span class="lightwell-credit">Dependency remediation powered by <a href="https://www.redhat.com/en/technologies/cloud/lightwell-network" rel="noopener noreferrer">Red Hat Lightwell Network</a></span>
+    <span id="build-chip" class="build-chip" aria-live="polite">Loading…</span>
   </header>
 
   <main>
-    <section class="hero">
-      <p class="hero-eyebrow">Red Hat Lightwell · surgical backports</p>
-      <h1>ACME Order Hub</h1>
-      <p class="tagline">A customer-style app that pins Spring forever — then remediates through Nexus without rewriting application code.</p>
+    <section class="hero app-hero">
+      <h1>Order Hub</h1>
+      <p class="tagline">Submit and track internal purchase orders for ACME plants and warehouses.</p>
     </section>
 
-    <section id="build-banner" class="build-banner" aria-live="polite">
-      <span class="banner-label">Loading deployment…</span>
-    </section>
-
-    <section class="actions-row">
-      <button type="button" id="walkthrough-btn" class="btn btn-primary">▶ Story: before → after</button>
-      <p class="sim-disclaimer">Story only — does not rebuild this running app. Real Stage 2 steps are in <code>README.md</code> (stop server, rebuild, restart).</p>
-    </section>
-
-    <section class="section-head">
-      <h2>Pinned dependencies</h2>
-      <p class="hint">Three libraries. Only Spring changes in Stage 2.</p>
-    </section>
-    <section id="deps" class="card-grid" aria-label="Dependencies"></section>
-
-    <section class="card" id="cve-section">
-      <h2>Security posture</h2>
-      <p class="hint">Representative CVEs for demo storytelling — <strong>not a live scanner</strong>. IDs are real; VULNERABLE / REMEDIATED labels flip from the Spring version string in this build.</p>
-      <div class="cve-legend">
-        <span class="legend-item target">Lightwell target — Spring rows flip in Stage 2</span>
-        <span class="legend-item unchanged">Unchanged pin — stays VULNERABLE on purpose</span>
-      </div>
-      <div id="cve-list" class="cve-list"></div>
-    </section>
-
-    <section class="card what-changed">
-      <h2>What Lightwell changes</h2>
-      <p>Stage 1 is this community build. Stage 2 is a <strong>separate rebuild</strong> (stop the server, follow README Stage 2, start the new JAR). This page only reflects whatever JAR is running now.</p>
-      <pre class="diff"><code>This JAR (live banner above)
-  Spring version baked in at build time
-
-To flip Spring → .rhlw (Stage 2)
-  stop server → README Stage 2 → new JAR</code></pre>
-      <p>See <code>README.md</code> for Nexus repos, upload, and the lightwell rebuild commands.</p>
-    </section>
-
-    <details class="card playground-details" id="playground">
-      <summary>
-        <span class="summary-title">Live playground</span>
-        <span class="summary-hint">Optional — proves the app still takes orders after remediation</span>
-      </summary>
-      <form id="order-form">
+    <section class="app-panel" id="playground" aria-label="Create order">
+      <h2>New order</h2>
+      <form id="order-form" class="order-form">
         <label>Customer name <input name="customerName" value="Jane Doe" required></label>
         <label>Order ID <input name="orderId" value="ACME-1001" required></label>
-        <label>Note <input name="note" placeholder="Optional"></label>
+        <label>Note <input name="note" placeholder="Optional delivery note"></label>
         <button type="submit" class="btn btn-primary">Submit order</button>
       </form>
-      <pre id="order-result" class="result" hidden></pre>
+      <div id="order-result-wrap" class="order-result-wrap" hidden>
+        <h3>Confirmation</h3>
+        <pre id="order-result" class="result"></pre>
+      </div>
+    </section>
+
+    <details class="demo-drawer" id="demo-drawer">
+      <summary>
+        <span class="summary-title">About this demo</span>
+        <span class="summary-hint">Dependencies, CVE story, and Lightwell / Nexus — optional for presenters</span>
+      </summary>
+
+      <div class="demo-drawer-body">
+        <p class="demo-intro">
+          This Order Hub is a thin sample app. The real demo is how its Spring pin is remediated through
+          <a href="https://www.redhat.com/en/technologies/cloud/lightwell-network" rel="noopener noreferrer">Red Hat Lightwell</a>
+          and Nexus. The CVE list below is a <strong>story catalog</strong>, not a scanner.
+          Rebuilding for Stage 2 is done from the terminal (see <code>README.md</code>) — not from this page.
+        </p>
+
+        <section id="build-banner" class="build-banner" aria-live="polite">
+          <span class="banner-label">Loading deployment…</span>
+        </section>
+
+        <div class="actions-row">
+          <button type="button" id="walkthrough-btn" class="btn btn-secondary">▶ Story: before → after</button>
+          <p class="sim-disclaimer">Story only. Does not rebuild this running app.</p>
+        </div>
+
+        <section class="section-head">
+          <h2>Pinned dependencies</h2>
+          <p class="hint">Three libraries in this sample. Only Spring changes in Stage 2.</p>
+        </section>
+        <section id="deps" class="card-grid" aria-label="Dependencies"></section>
+
+        <section class="card" id="cve-section">
+          <h2>Security posture (demo catalog)</h2>
+          <p class="hint">Representative CVEs for storytelling — <strong>not a live scanner</strong>. Labels flip from the Spring version baked into this JAR.</p>
+          <div class="cve-legend">
+            <span class="legend-item target">Lightwell target — Spring rows flip after Stage 2 rebuild</span>
+            <span class="legend-item unchanged">Unchanged pin — stays VULNERABLE on purpose</span>
+          </div>
+          <div id="cve-list" class="cve-list"></div>
+        </section>
+
+        <section class="card what-changed">
+          <h2>What Lightwell changes</h2>
+          <p>Stage 2 is a <strong>separate rebuild</strong>: stop this server, follow README Stage 2, start the new JAR. This page only shows whatever JAR is running now.</p>
+          <pre class="diff"><code>Live JAR → banner / chip above
+Stage 2 → stop → README → new JAR with .rhlw Spring</code></pre>
+        </section>
+      </div>
     </details>
   </main>
 
@@ -91,7 +101,7 @@ To flip Spring → .rhlw (Stage 2)
   </div>
 
   <footer>
-    <p>ACME Corp internal demo · Lightwell surgical backports · CVE table is a story prop, not a scanner</p>
+    <p>ACME Corp · Order Hub sample · Lightwell demo materials in “About this demo”</p>
   </footer>
   <script src="/js/app.js"></script>
 </body>
