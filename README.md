@@ -24,35 +24,47 @@
 
 ## How the pieces fit
 
-**Nexus layout** — one proxy, two hosted locals, one group builds use:
+**Nexus layout** — dependency path only. `acme-releases` is a separate publish target (not a `public` member).
+
+```mermaid
+flowchart TB
+  subgraph dependency_path ["Dependency path"]
+    direction TB
+    LW["hosted: lightwell-java-remediated-mock"]
+    C["proxy: central"]
+    G["group: public"]
+    LW -->|"member (first)"| G
+    C -->|"member (second)"| G
+    CentralNet["Public Java registry (Central)"] -->|"proxied by"| C
+    Build["App build"] -->|"resolves from"| G
+  end
+
+  subgraph publish_target ["App publish target — not in public"]
+    APP["hosted: acme-releases"]
+  end
+```
+
+**How packages and the app JAR move** — labeled edges for upload / resolve / publish:
 
 ```mermaid
 flowchart LR
-  subgraph Nexus
-    LW["hosted\nlightwell-java-remediated-mock\n(fake .rhlw packages)"]
-    C["proxy\ncentral"]
-    G["group\npublic"]
-    APP["hosted\nacme-releases\n(app JAR)"]
-    LW --> G
-    C --> G
-  end
-  CentralNet["Public Java registry\n(Central)"] --> C
-  Build["App build\n(settings → public)"] --> G
-  Publish["publish-app-to-nexus.sh"] --> APP
+  Upload["upload-mock-to-nexus.sh"] -->|"publishes fake .rhlw"| LW["hosted: lightwell-java-remediated-mock"]
+  Build["App build"] -->|"resolves deps"| Pub["group: public"]
+  Publish["publish-app-to-nexus.sh"] -->|"publishes app JAR"| APP["hosted: acme-releases"]
 ```
 
-**Demo flow** — normal build first, then Lightwell via Nexus, then publish when you want:
+**Demo flow** — Stage 1 first, then Lightwell via Nexus, publish when you want:
 
 ```mermaid
 flowchart TD
-  S1["Stage 1: build community\n./mvnw -Pcommunity package"] --> Run1["Run JAR locally"]
-  S1 --> Pub["Publish app JAR → acme-releases"]
-  Prep["Upload fake Lightwell →\nlightwell-java-remediated-mock"] --> S2
-  S2["Stage 2: build lightwell\nvia Nexus public group"] --> Run2["Run remediated JAR"]
-  S2 --> Pub2["Re-publish app JAR\n(optional)"]
+  S1["Stage 1: build community"] --> Run1["Run JAR locally"]
+  S1 --> Pub1["Optional: publish JAR → acme-releases"]
+  Prep["upload-mock-to-nexus.sh\n→ lightwell-java-remediated-mock"] --> S2
+  S2["Stage 2: build lightwell\n(resolves via public)"] --> Run2["Run remediated JAR"]
+  S2 --> Pub2["Optional: re-publish JAR → acme-releases"]
 ```
 
-Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-…-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell first, then Central).
+Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-…-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell first, then Central). `acme-releases` is only for the app JAR — it is **not** a member of `public`.
 
 ## Stage 1 — Build the app normally
 
