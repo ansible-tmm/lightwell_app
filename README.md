@@ -5,12 +5,13 @@
 ## Table of contents
 
 1. [Prerequisites](#prerequisites)
-2. [Stage 1 — Build the app normally](#stage-1--build-the-app-normally)
-3. [Already have Nexus?](#already-have-nexus)
-4. [Stage 2 — Lightwell through Nexus (fake package)](#stage-2--lightwell-through-nexus-fake-package)
-5. [Optional: provision Nexus with Ansible](#optional-provision-nexus-with-ansible)
-6. [Story libraries](#story-libraries)
-7. [Docs](#docs)
+2. [How the pieces fit](#how-the-pieces-fit)
+3. [Stage 1 — Build the app normally](#stage-1--build-the-app-normally)
+4. [Already have Nexus?](#already-have-nexus)
+5. [Stage 2 — Lightwell through Nexus (fake package)](#stage-2--lightwell-through-nexus-fake-package)
+6. [Optional: provision Nexus with Ansible](#optional-provision-nexus-with-ansible)
+7. [Story libraries](#story-libraries)
+8. [Docs](#docs)
 
 ## Prerequisites
 
@@ -20,6 +21,38 @@
 | Project build wrapper (`./mvnw`) | yes | yes |
 | Sonatype Nexus (existing or Ansible) | no | yes |
 | Nexus admin password | no | yes |
+
+## How the pieces fit
+
+**Nexus layout** — one proxy, two hosted locals, one group builds use:
+
+```mermaid
+flowchart LR
+  subgraph Nexus
+    LW["hosted\nlightwell-java-remediated-mock\n(fake .rhlw packages)"]
+    C["proxy\ncentral"]
+    G["group\npublic"]
+    APP["hosted\nacme-releases\n(app JAR)"]
+    LW --> G
+    C --> G
+  end
+  CentralNet["Public Java registry\n(Central)"] --> C
+  Build["App build\n(settings → public)"] --> G
+  Publish["publish-app-to-nexus.sh"] --> APP
+```
+
+**Demo flow** — normal build first, then Lightwell via Nexus, then publish when you want:
+
+```mermaid
+flowchart TD
+  S1["Stage 1: build community\n./mvnw -Pcommunity package"] --> Run1["Run JAR locally"]
+  S1 --> Pub["Publish app JAR → acme-releases"]
+  Prep["Upload fake Lightwell →\nlightwell-java-remediated-mock"] --> S2
+  S2["Stage 2: build lightwell\nvia Nexus public group"] --> Run2["Run remediated JAR"]
+  S2 --> Pub2["Re-publish app JAR\n(optional)"]
+```
+
+Four repos, three jobs: **proxy** (`central`) for community packages, **hosted** for your stuff (`lightwell-…-mock` + `acme-releases`), **group** (`public`) so builds hit one URL (Lightwell first, then Central).
 
 ## Stage 1 — Build the app normally
 
