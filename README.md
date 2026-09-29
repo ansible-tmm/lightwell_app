@@ -256,14 +256,25 @@ Requires `maven/settings-nexus.xml` from [Already have Nexus? §B](#b-point-buil
 
 ```bash
 ./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package
-java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
 ```
 
-Only the Spring version property changes (`5.3.18` → `5.3.18.rhlw-00010`). Application code is unchanged.
+`-Plightwell` selects the **lightwell** profile (Spring Framework pinned to `5.3.18.rhlw-00010`).  
+`-s maven/settings-nexus.xml` resolves dependencies through Nexus `maven-public` (which prefers `lightwell-java-remediated` first).  
+`-U` forces Maven to re-check remote repos for updates (picks up the newly uploaded `.rhlw` artifacts).  
+`-DskipTests` skips tests to keep the demo build fast.  
+`package` produces `target/lightwell-app-1.0.0-SNAPSHOT.jar` — same app code as Stage 1; only the Spring version pin changed.
 
 Optional talk-track printout (Spring rows should now say REMEDIATED): `./scripts/cve-status.sh lightwell`
 
-### 4. Re-publish the remediated build (optional)
+### 4. Run the remediated application
+
+```bash
+java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
+```
+
+Same as Stage 1: starts the Spring Boot server on http://localhost:8080. The demo console should now show the remediated / production-ready story. Stop with Ctrl+C when finished.
+
+### 5. Re-publish the remediated build (optional)
 
 ```bash
 ./scripts/publish-app-to-nexus.sh
