@@ -73,7 +73,7 @@ These usually **already exist**. Do not create second copies with different name
 | Name | Type | On shared Nexus | What you do |
 |------|------|-----------------|-------------|
 | `maven-central` | **proxy** | stock default | Leave as-is (remote = Central) |
-| `lightwell-java-remediated` | **hosted** | colleague / Lightwell | Upload fake `.rhlw` packages here (`upload-mock-to-nexus.sh`) |
+| `lightwell-java-remediated` | **hosted** | colleague / Lightwell | Bucket for `.rhlw` Spring packages — the repo can exist and still be empty until you upload |
 | `maven-snapshots` | **hosted** | stock default | SNAPSHOT builds published here by `publish-app-to-nexus.sh` (auto-selected) |
 | `maven-releases` | **hosted** | stock default | Release builds published here by `publish-app-to-nexus.sh` (auto-selected) |
 | `maven-public` | **group** | stock default | **Edit members** so order is: (1) `lightwell-java-remediated`, (2) `maven-central` (keep other members after if you want) |
@@ -84,7 +84,7 @@ Ignore unrelated defaults (`nuget-*`, `pypi-*`, `maven-snapshots`, `maven-all`, 
 
 | Step | Direction |
 |------|-----------|
-| Upload fake Lightwell | `./scripts/build-mock-lightwell-repo.sh` then `./scripts/upload-mock-to-nexus.sh` → `lightwell-java-remediated` |
+| Fill Lightwell bucket with fake `.rhlw` packages | `build-mock-lightwell-repo.sh` (local stage) then `upload-mock-to-nexus.sh` → `lightwell-java-remediated` — skip if Browse already shows `5.3.18.rhlw-00010` |
 | Publish app JAR | `./mvnw -Pcommunity package` then `./scripts/publish-app-to-nexus.sh` → `maven-releases` |
 | Point builds at Nexus | Copy `maven/settings-nexus.xml.example` → `maven/settings-nexus.xml`; URL `…/repository/maven-public/` |
 | Stage 2 build | `./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package` |
@@ -209,17 +209,36 @@ Then:
 
 ## Stage 2 — Lightwell through Nexus (fake package)
 
-Demo simulation: republish Central Spring `5.3.18` jars as `5.3.18.rhlw-00010` into the Nexus **hosted** Lightwell repo. Same idea as real Lightwell, without packages.redhat.com.
+Demo simulation: same idea as real Lightwell, without `packages.redhat.com`.
+
+**Two different things (easy to confuse):**
+
+| Thing | What it is |
+|-------|------------|
+| `lightwell-java-remediated` on Nexus | An empty (or already-filled) **bucket** — a place to store artifacts. Having this repo does **not** mean Stage 2 packages are present. |
+| `build-mock-lightwell-repo.sh` | Builds the **fake Lightwell packages** on your laptop (does **not** create the Nexus repo). |
+| `upload-mock-to-nexus.sh` | Pushes those packages **into** the Nexus bucket. |
+
+What `build-mock-lightwell-repo.sh` actually does:
+
+1. Downloads normal Spring `5.3.18` jars/POMs from Maven Central
+2. Renames them to `5.3.18.rhlw-00010`
+3. Writes them into a local `mock-repo/` folder
+
+Then `upload-mock-to-nexus.sh` uploads that folder into `lightwell-java-remediated`.
+
+**Skip both scripts** if Browse → `lightwell-java-remediated` → `org/springframework/.../5.3.18.rhlw-00010/` already has content (colleague or Ansible already filled the bucket). If that path is empty, you still need build + upload for Stage 2 to resolve.
 
 ### 1. Stage and upload the fake Lightwell artifacts
 
 ```bash
+# Local only: download Central Spring 5.3.18 and rewrite as 5.3.18.rhlw-00010 under mock-repo/
 ./scripts/build-mock-lightwell-repo.sh
 
 export NEXUS_URL='http://<your-nexus-host>:8081'
 export NEXUS_USER='admin'
 export NEXUS_PASSWORD='...'
-# default repo: lightwell-java-remediated
+# Pushes mock-repo/ into the existing Nexus bucket (default: lightwell-java-remediated)
 ./scripts/upload-mock-to-nexus.sh
 ```
 
