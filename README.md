@@ -74,7 +74,8 @@ These usually **already exist**. Do not create second copies with different name
 |------|------|-----------------|-------------|
 | `maven-central` | **proxy** | stock default | Leave as-is (remote = Central) |
 | `lightwell-java-remediated` | **hosted** | colleague / Lightwell | Upload fake `.rhlw` packages here (`upload-mock-to-nexus.sh`) |
-| `maven-releases` | **hosted** | stock default | Publish the ACME app JAR here (`publish-app-to-nexus.sh`) |
+| `maven-snapshots` | **hosted** | stock default | SNAPSHOT builds published here by `publish-app-to-nexus.sh` (auto-selected) |
+| `maven-releases` | **hosted** | stock default | Release builds published here by `publish-app-to-nexus.sh` (auto-selected) |
 | `maven-public` | **group** | stock default | **Edit members** so order is: (1) `lightwell-java-remediated`, (2) `maven-central` (keep other members after if you want) |
 
 Ignore unrelated defaults (`nuget-*`, `pypi-*`, `maven-snapshots`, `maven-all`, etc.) for this Java demo.
@@ -183,12 +184,14 @@ Confirm the [Repositories](#repositories-match-shared-nexus) table (especially `
 export NEXUS_URL='http://<your-nexus-host>:8081'
 export NEXUS_USER='admin'
 export NEXUS_PASSWORD='...'
-export NEXUS_REPO='maven-releases'   # optional; this is the default
-
 ./scripts/publish-app-to-nexus.sh
 ```
 
-Browse: `http://<nexus-host>:8081` → **Browse** → `maven-releases` → `com/acme/lightwell-app`.
+The script auto-selects the right Nexus repo: `maven-snapshots` for `-SNAPSHOT` versions, `maven-releases` for release versions. Override with `NEXUS_REPO` if needed.
+
+Browse: `http://<nexus-host>:8081` → **Browse** → `maven-snapshots` → `com/acme/lightwell-app`:
+
+![Nexus Browse — lightwell-app published to maven-snapshots](docs/images/nexus-browse-maven-snapshots.png)
 
 ### B. Point builds at Nexus (optional for Stage 1)
 
@@ -238,7 +241,7 @@ Optional talk-track printout (Spring rows should now say REMEDIATED): `./scripts
 ### 3. Re-publish the remediated build (optional)
 
 ```bash
-NEXUS_REPO=maven-releases ./scripts/publish-app-to-nexus.sh
+./scripts/publish-app-to-nexus.sh
 ```
 
 ## Optional: provision Nexus with Ansible
