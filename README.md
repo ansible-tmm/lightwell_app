@@ -80,16 +80,7 @@ These usually **already exist**. Do not create second copies with different name
 
 Ignore unrelated defaults (`nuget-*`, `pypi-*`, `maven-snapshots`, `maven-all`, etc.) for this Java demo.
 
-### After repos are wired
-
-| Step | Direction |
-|------|-----------|
-| Fill Lightwell bucket with fake `.rhlw` packages | `build-mock-lightwell-repo.sh` (local stage) then `upload-mock-to-nexus.sh` → `lightwell-java-remediated` — skip if Browse already shows `5.3.18.rhlw-00010` |
-| Publish app JAR | `./mvnw -Pcommunity package` then `./scripts/publish-app-to-nexus.sh` → `maven-releases` |
-| Point builds at Nexus | Copy `maven/settings-nexus.xml.example` → `maven/settings-nexus.xml`; URL `…/repository/maven-public/` |
-| Stage 2 build | `./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package` |
-
-Full command blocks: [Already have Nexus?](#already-have-nexus) and [Stage 2](#stage-2--lightwell-through-nexus-fake-package).
+Then follow the command blocks in [Already have Nexus?](#already-have-nexus) and [Stage 2](#stage-2--lightwell-through-nexus-fake-package).
 
 ## Demo story (vulnerable → production-ready)
 
@@ -193,15 +184,20 @@ Browse: `http://<nexus-host>:8081` → **Browse** → `maven-snapshots` → `com
 
 ![Nexus Browse — lightwell-app published to maven-snapshots](docs/images/nexus-browse-maven-snapshots.png)
 
-### B. Point builds at Nexus (optional for Stage 1)
+### B. Point builds at Nexus (required before Stage 2; optional for Stage 1)
+
+Maven does **not** use `NEXUS_*` env vars. Create a local settings file (gitignored) so builds resolve through Nexus:
 
 ```bash
 cp maven/settings-nexus.xml.example maven/settings-nexus.xml
-# Set <url> to http://<nexus-host>:8081/repository/maven-public/
-# Set <password> to your Nexus admin (or deploy user) password
 ```
 
-Then:
+Edit `maven/settings-nexus.xml`:
+
+1. Set both `<url>` values to `http://<nexus-host>:8081/repository/maven-public/`
+2. Set `<password>` to your Nexus admin (or deploy user) password
+
+Optional Stage 1 check (resolve community deps via Nexus):
 
 ```bash
 ./mvnw -Pcommunity -s maven/settings-nexus.xml package
@@ -250,9 +246,22 @@ export NEXUS_PASSWORD='...'
 
 Confirm in Nexus **Browse** → `lightwell-java-remediated` → `org/springframework/.../5.3.18.rhlw-00010/`.
 
-### 3. Build with the Lightwell profile (resolves via Nexus)
+### 3. Point builds at Nexus (required)
 
-Requires `maven/settings-nexus.xml` from [Already have Nexus? §B](#b-point-builds-at-nexus-optional-for-stage-1).
+Maven needs `maven/settings-nexus.xml` to resolve from Nexus. If you already did [Already have Nexus? §B](#b-point-builds-at-nexus-required-before-stage-2-optional-for-stage-1), skip to step 4.
+
+```bash
+cp maven/settings-nexus.xml.example maven/settings-nexus.xml
+```
+
+Edit `maven/settings-nexus.xml`:
+
+1. Set both `<url>` values to `http://<nexus-host>:8081/repository/maven-public/`
+2. Set `<password>` to your Nexus admin (or deploy user) password
+
+Without this file, `./mvnw -s maven/settings-nexus.xml …` fails with “The specified user settings file does not exist.”
+
+### 4. Build with the Lightwell profile (resolves via Nexus)
 
 ```bash
 ./mvnw -Plightwell -s maven/settings-nexus.xml -U -DskipTests package
@@ -266,7 +275,7 @@ Requires `maven/settings-nexus.xml` from [Already have Nexus? §B](#b-point-buil
 
 Optional talk-track printout (Spring rows should now say REMEDIATED): `./scripts/cve-status.sh lightwell`
 
-### 4. Run the remediated application
+### 5. Run the remediated application
 
 ```bash
 java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
@@ -274,7 +283,7 @@ java -jar target/lightwell-app-1.0.0-SNAPSHOT.jar
 
 Same as Stage 1: starts the Spring Boot server on http://localhost:8080. The demo console should now show the remediated / production-ready story. Stop with Ctrl+C when finished.
 
-### 5. Re-publish the remediated build (optional)
+### 6. Re-publish the remediated build (optional)
 
 ```bash
 ./scripts/publish-app-to-nexus.sh
