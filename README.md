@@ -244,7 +244,9 @@ export NEXUS_PASSWORD='...'
 ./scripts/upload-mock-to-nexus.sh
 ```
 
-Confirm in Nexus **Browse** → `lightwell-java-remediated` → `org/springframework/.../5.3.18.rhlw-00010/`.
+Confirm in Nexus **Browse** → `lightwell-java-remediated` → `org/springframework/` — you should see modules like `spring-aop` with version `5.3.18.rhlw-00010` containing the `.jar` and `.pom` (plus checksums):
+
+![Nexus Browse — fake Lightwell Spring artifacts in lightwell-java-remediated](docs/images/nexus-browse-lightwell-java-remediated.png)
 
 ### 3. Point builds at Nexus (required)
 
