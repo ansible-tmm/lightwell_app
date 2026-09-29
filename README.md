@@ -229,22 +229,28 @@ Then `upload-mock-to-nexus.sh` uploads that folder into `lightwell-java-remediat
 
 **Skip both scripts** if Browse → `lightwell-java-remediated` → `org/springframework/.../5.3.18.rhlw-00010/` already has content (colleague or Ansible already filled the bucket). If that path is empty, you still need build + upload for Stage 2 to resolve.
 
-### 1. Stage and upload the fake Lightwell artifacts
+### 1. Stage the fake Lightwell artifacts (local only)
+
+Downloads Central Spring `5.3.18` and rewrites it as `5.3.18.rhlw-00010` under `mock-repo/`. Does not touch Nexus.
 
 ```bash
-# Local only: download Central Spring 5.3.18 and rewrite as 5.3.18.rhlw-00010 under mock-repo/
 ./scripts/build-mock-lightwell-repo.sh
+```
 
+### 2. Upload into the existing Nexus bucket
+
+Pushes `mock-repo/` into `lightwell-java-remediated` (the repo must already exist).
+
+```bash
 export NEXUS_URL='http://<your-nexus-host>:8081'
 export NEXUS_USER='admin'
 export NEXUS_PASSWORD='...'
-# Pushes mock-repo/ into the existing Nexus bucket (default: lightwell-java-remediated)
 ./scripts/upload-mock-to-nexus.sh
 ```
 
 Confirm in Nexus **Browse** → `lightwell-java-remediated` → `org/springframework/.../5.3.18.rhlw-00010/`.
 
-### 2. Build with the Lightwell profile (resolves via Nexus)
+### 3. Build with the Lightwell profile (resolves via Nexus)
 
 Requires `maven/settings-nexus.xml` from [Already have Nexus? §B](#b-point-builds-at-nexus-optional-for-stage-1).
 
@@ -257,7 +263,7 @@ Only the Spring version property changes (`5.3.18` → `5.3.18.rhlw-00010`). App
 
 Optional talk-track printout (Spring rows should now say REMEDIATED): `./scripts/cve-status.sh lightwell`
 
-### 3. Re-publish the remediated build (optional)
+### 4. Re-publish the remediated build (optional)
 
 ```bash
 ./scripts/publish-app-to-nexus.sh
