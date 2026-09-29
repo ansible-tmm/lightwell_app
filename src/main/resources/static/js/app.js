@@ -105,34 +105,67 @@
       if (bannerEl) bannerEl.textContent = 'Could not load /api/status';
     });
 
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const fd = new FormData(form);
-    const body = {
-      customerName: fd.get('customerName'),
-      orderId: fd.get('orderId'),
-      note: fd.get('note') || undefined
-    };
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        resultWrap.hidden = false;
-        resultEl.textContent = JSON.stringify(data, null, 2);
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const body = {
+        customerName: fd.get('customerName'),
+        orderId: fd.get('orderId'),
+        note: fd.get('note') || undefined
+      };
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting…';
+      }
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       })
-      .catch(function (err) {
-        resultWrap.hidden = false;
-        resultEl.textContent = String(err);
-      });
-  });
+        .then(function (r) {
+          if (!r.ok) {
+            throw new Error('Order request failed (' + r.status + ')');
+          }
+          return r.json();
+        })
+        .then(function (data) {
+          showOrderConfirmation(data);
+        })
+        .catch(function (err) {
+          showOrderConfirmation(null, err);
+        })
+        .finally(function () {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit order';
+          }
+        });
+    });
+  }
+
+  function showOrderConfirmation(data, err) {
+    if (!resultWrap || !resultEl) return;
+    resultWrap.hidden = false;
+    resultWrap.removeAttribute('hidden');
+    if (err) {
+      resultWrap.classList.add('error');
+      resultEl.textContent = String(err);
+      return;
+    }
+    resultWrap.classList.remove('error');
+    const msg = (data && data.statusMessage) || 'Order accepted.';
+    const pretty = JSON.stringify(data, null, 2);
+    resultEl.textContent = msg + '\n\n' + pretty;
+    resultWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
   const overlay = document.getElementById('walkthrough-overlay');
   const wtText = document.getElementById('wt-step-text');
   const wtVisual = document.getElementById('wt-visual');
   const wtNext = document.getElementById('wt-next');
+  const wtSkip = document.getElementById('wt-skip');
   const wtBtn = document.getElementById('walkthrough-btn');
   let wtSteps = [];
   let wtIndex = 0;
@@ -149,7 +182,9 @@
     }
     wtText.textContent = step.text;
     wtVisual.textContent = step.visual || '';
-    wtNext.textContent = wtIndex >= wtSteps.length - 1 ? 'Done' : 'Next';
+    if (wtNext) {
+      wtNext.textContent = wtIndex >= wtSteps.length - 1 ? 'Done' : 'Next';
+    }
   }
 
   function openWalkthrough() {
@@ -169,13 +204,17 @@
   if (wtBtn) {
     wtBtn.addEventListener('click', openWalkthrough);
   }
-  document.getElementById('wt-skip').addEventListener('click', closeWalkthrough);
-  wtNext.addEventListener('click', function () {
-    wtIndex += 1;
-    if (wtIndex >= wtSteps.length) {
-      closeWalkthrough();
-    } else {
-      showWtStep();
-    }
-  });
+  if (wtSkip) {
+    wtSkip.addEventListener('click', closeWalkthrough);
+  }
+  if (wtNext) {
+    wtNext.addEventListener('click', function () {
+      wtIndex += 1;
+      if (wtIndex >= wtSteps.length) {
+        closeWalkthrough();
+      } else {
+        showWtStep();
+      }
+    });
+  }
 })();

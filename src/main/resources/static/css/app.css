@@ -163,14 +163,27 @@ main {
 
 .order-result-wrap {
   margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border);
+  padding: 1rem 1.1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  background: rgba(94, 234, 212, 0.08);
+}
+
+.order-result-wrap.error {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.08);
 }
 
 .order-result-wrap h3 {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
   font-weight: 600;
+}
+
+.order-result-wrap .result {
+  margin: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .demo-drawer {
