@@ -3,14 +3,28 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
   <!-- Copy to settings-nexus.xml and set Nexus URL + credentials.
-       Provision repos with: ansible-playbook playbooks/provision_nexus.yml -->
+       Maven 3.8+ blocks plain HTTP remotes by default; the mirror below
+       overrides that so demo Nexus on http:// still works. -->
   <servers>
     <server>
-      <id>nexus</id>
+      <!-- Must match repository/pluginRepository <id> below -->
+      <id>nexus-public</id>
       <username>admin</username>
       <password>CHANGE_ME</password>
     </server>
   </servers>
+
+  <!-- Disable Maven's default HTTP blocker (mirror id must match exactly). -->
+  <mirrors>
+    <mirror>
+      <id>maven-default-http-blocker</id>
+      <mirrorOf>external:dummy:*</mirrorOf>
+      <name>Override default HTTP blocker for demo Nexus over HTTP</name>
+      <url>http://0.0.0.0/</url>
+      <blocked>true</blocked>
+    </mirror>
+  </mirrors>
+
   <profiles>
     <profile>
       <id>nexus</id>

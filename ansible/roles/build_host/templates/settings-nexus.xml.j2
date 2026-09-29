@@ -4,11 +4,23 @@
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
   <servers>
     <server>
-      <id>nexus</id>
+      <id>nexus-public</id>
       <username>{{ nexus_admin_user }}</username>
       <password>{{ nexus_effective_admin_password | default(nexus_admin_password) }}</password>
     </server>
   </servers>
+
+  <!-- Maven 3.8+ blocks plain HTTP remotes; override so Nexus over HTTP works. -->
+  <mirrors>
+    <mirror>
+      <id>maven-default-http-blocker</id>
+      <mirrorOf>external:dummy:*</mirrorOf>
+      <name>Override default HTTP blocker for demo Nexus over HTTP</name>
+      <url>http://0.0.0.0/</url>
+      <blocked>true</blocked>
+    </mirror>
+  </mirrors>
+
   <profiles>
     <profile>
       <id>nexus</id>

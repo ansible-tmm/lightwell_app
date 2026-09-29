@@ -194,8 +194,10 @@ cp maven/settings-nexus.xml.example maven/settings-nexus.xml
 
 Edit `maven/settings-nexus.xml`:
 
-1. Set both `<url>` values to `http://<nexus-host>:8081/repository/maven-public/`
+1. Set **both** `<url>` values (repository + pluginRepository) to `http://<nexus-host>:8081/repository/maven-public/`
 2. Set `<password>` to your Nexus admin (or deploy user) password
+
+The example already includes a small `<mirrors>` override. **Keep it** — Maven 3.8+ blocks plain `http://` remotes by default (`maven-default-http-blocker`). Without that override, the Stage 2 build fails even when Nexus is correct.
 
 Optional Stage 1 check (resolve community deps via Nexus):
 
@@ -258,10 +260,10 @@ cp maven/settings-nexus.xml.example maven/settings-nexus.xml
 
 Edit `maven/settings-nexus.xml`:
 
-1. Set both `<url>` values to `http://<nexus-host>:8081/repository/maven-public/`
+1. Set **both** `<url>` values (repository + pluginRepository) to `http://<nexus-host>:8081/repository/maven-public/`
 2. Set `<password>` to your Nexus admin (or deploy user) password
 
-Without this file, `./mvnw -s maven/settings-nexus.xml …` fails with “The specified user settings file does not exist.”
+Keep the `<mirrors>` block from the example (Maven 3.8+ HTTP blocker override). Without this file, `./mvnw -s maven/settings-nexus.xml …` fails with “The specified user settings file does not exist.”
 
 ### 4. Build with the Lightwell profile (resolves via Nexus)
 
