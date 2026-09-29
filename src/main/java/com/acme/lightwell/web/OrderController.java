@@ -69,19 +69,12 @@ public class OrderController {
         String springRepo = lightwellSpring
                 ? "Nexus · lightwell-java-remediated"
                 : "Community · public Central";
-        String otherRepo = lightwellSpring
-                ? "Unchanged pin · Central via Nexus"
-                : "Community · public Central";
         String springNote = lightwellSpring
-                ? "Stage 2: remediated .rhlw build resolved through Nexus"
-                : "Stage 2 will swap to 5.3.18.rhlw-00010 via Nexus (same app code)";
+                ? "Production-ready remediated Spring via Nexus"
+                : "Vulnerable community pin — Stage 2 remediates through Nexus";
 
         List<Map<String, String>> dependencies = List.of(
-                dep("Spring Framework", "org.springframework:spring-webmvc", springFrameworkVersion, springRepo, springNote),
-                dep("Jackson Databind", "com.fasterxml.jackson.core:jackson-databind", jacksonVersion, otherRepo,
-                        "Pin unchanged — stays in the demo catalog as VULNERABLE"),
-                dep("Apache Commons Text", "org.apache.commons:commons-text", commonsTextVersion, otherRepo,
-                        "Pin unchanged — stays in the demo catalog as VULNERABLE"));
+                dep("Spring Framework", "org.springframework:spring-webmvc", springFrameworkVersion, springRepo, springNote));
 
         List<Map<String, String>> cves = VulnerabilityCatalog.rowsFor(springFrameworkVersion).stream()
                 .map(row -> {
@@ -89,7 +82,6 @@ public class OrderController {
                     m.put("cveId", row.getCveId());
                     m.put("library", row.getLibrary());
                     m.put("status", row.getStatus().name());
-                    m.put("storyRole", row.getStoryRole().name());
                     m.put("nvdUrl", row.getNvdUrl());
                     return m;
                 })

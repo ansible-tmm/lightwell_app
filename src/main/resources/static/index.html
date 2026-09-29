@@ -46,10 +46,10 @@
 
       <div class="demo-drawer-body">
         <p class="demo-intro">
-          This Order Hub is a thin sample app. The real demo is how its Spring pin is remediated through
-          <a href="https://www.redhat.com/en/technologies/cloud/lightwell-network" rel="noopener noreferrer">Red Hat Lightwell</a>
-          and Nexus. The CVE list below is a <strong>story catalog</strong>, not a scanner.
-          Rebuilding for Stage 2 is done from the terminal (see <code>README.md</code>) — not from this page.
+          Order Hub is a thin sample app. This drawer shows how its Spring pin goes from
+          <strong>vulnerable</strong> (community) to <strong>production-ready</strong>
+          (Lightwell via Nexus). The CVE list is a <strong>story catalog</strong>, not a scanner.
+          Stage 2 rebuild steps are in <code>README.md</code> — not on this page.
         </p>
 
         <section id="build-banner" class="build-banner" aria-live="polite">
@@ -57,31 +57,27 @@
         </section>
 
         <div class="actions-row">
-          <button type="button" id="walkthrough-btn" class="btn btn-secondary">▶ Story: before → after</button>
+          <button type="button" id="walkthrough-btn" class="btn btn-secondary">▶ Story: vulnerable → production-ready</button>
           <p class="sim-disclaimer">Story only. Does not rebuild this running app.</p>
         </div>
 
         <section class="section-head">
-          <h2>Pinned dependencies</h2>
-          <p class="hint">Three libraries in this sample. Only Spring changes in Stage 2.</p>
+          <h2>Spring dependency</h2>
+          <p class="hint">The library this demo remediates.</p>
         </section>
         <section id="deps" class="card-grid" aria-label="Dependencies"></section>
 
         <section class="card" id="cve-section">
-          <h2>Security posture (demo catalog)</h2>
-          <p class="hint">Representative CVEs for storytelling — <strong>not a live scanner</strong>. Labels flip from the Spring version baked into this JAR.</p>
-          <div class="cve-legend">
-            <span class="legend-item target">Lightwell target — Spring rows flip after Stage 2 rebuild</span>
-            <span class="legend-item unchanged">Unchanged pin — stays VULNERABLE on purpose</span>
-          </div>
+          <h2>Spring CVE catalog (demo)</h2>
+          <p class="hint">Real CVE IDs; <strong>not a live scanner</strong>. Status flips when this JAR’s Spring version includes <code>rhlw</code>.</p>
           <div id="cve-list" class="cve-list"></div>
         </section>
 
         <section class="card what-changed">
-          <h2>What Lightwell changes</h2>
-          <p>Stage 2 is a <strong>separate rebuild</strong>: stop this server, follow README Stage 2, start the new JAR. This page only shows whatever JAR is running now.</p>
-          <pre class="diff"><code>Live JAR → banner / chip above
-Stage 2 → stop → README → new JAR with .rhlw Spring</code></pre>
+          <h2>Vulnerable → production-ready</h2>
+          <p>Stage 2 is a <strong>separate rebuild</strong>: stop this server, follow README Stage 2, start the new JAR.</p>
+          <pre class="diff"><code>Stage 1  Spring 5.3.18           → CVE catalog VULNERABLE
+Stage 2  Spring 5.3.18.rhlw-…    → CVE catalog REMEDIATED</code></pre>
         </section>
       </div>
     </details>

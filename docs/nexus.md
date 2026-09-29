@@ -55,10 +55,8 @@ lightwell_repo_user: <service-account>
 lightwell_repo_token: <token>
 ```
 
-## Story libraries
+## Story library
 
 | Library | Community | Lightwell (hosted) |
 |---------|-----------|--------------------|
-| Spring Framework | `5.3.18` | `5.3.18.rhlw-00010` |
-| Jackson Databind | `2.13.4.2` | unchanged (Central) |
-| Apache Commons Text | `1.9` | unchanged |
+| Spring Framework | `5.3.18` (vulnerable) | `5.3.18.rhlw-00010` (production-ready) |

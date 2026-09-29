@@ -11,13 +11,13 @@
     const isLw = !!(data.lightwellActive || (data.springFrameworkVersion && data.springFrameworkVersion.includes('rhlw')));
     const verClass = isLw ? 'version rhlw' : 'version';
     const kicker = isLw
-      ? 'Stage 2 build — Lightwell Spring via Nexus'
-      : 'Stage 1 build — community packages (before Lightwell)';
+      ? 'Production-ready — Lightwell Spring via Nexus'
+      : 'Vulnerable — community Spring (before Lightwell)';
 
     if (chipEl) {
       chipEl.className = 'build-chip ' + (isLw ? 'lightwell' : 'community');
-      chipEl.textContent = (isLw ? 'Lightwell · ' : 'Community · ') + 'Spring ' + data.springFrameworkVersion;
-      chipEl.title = 'Open “About this demo” for dependency and CVE details';
+      chipEl.textContent = (isLw ? 'Production-ready · ' : 'Vulnerable · ') + 'Spring ' + data.springFrameworkVersion;
+      chipEl.title = 'Open “About this demo” for Spring remediation details';
     }
 
     if (bannerEl) {
@@ -34,8 +34,7 @@
     (data.dependencies || []).forEach(function (dep) {
       const card = document.createElement('article');
       const lw = dep.repository && dep.repository.toLowerCase().includes('lightwell');
-      const isSpring = dep.name && dep.name.toLowerCase().includes('spring');
-      card.className = 'card dep-card' + (lw ? ' lightwell' : '') + (isSpring ? ' spring-focus' : '');
+      card.className = 'card dep-card spring-focus' + (lw ? ' lightwell' : '');
       card.innerHTML =
         '<h3>' + escapeHtml(dep.name) + '</h3>' +
         '<div class="coord">' + escapeHtml(dep.coordinate) + '</div>' +
@@ -45,46 +44,22 @@
       depsEl.appendChild(card);
     });
 
-    const targets = [];
-    const unchanged = [];
-    (data.cves || []).forEach(function (row) {
-      if (row.storyRole === 'UNCHANGED_PIN') {
-        unchanged.push(row);
-      } else {
-        targets.push(row);
-      }
-    });
-
     cveEl.innerHTML = '';
-    if (targets.length) {
-      appendGroupLabel(cveEl, 'Lightwell target (Spring)');
-      targets.forEach(function (row) { cveEl.appendChild(cveRowEl(row)); });
-    }
-    if (unchanged.length) {
-      appendGroupLabel(cveEl, 'Unchanged pins (not remediated in this demo)');
-      unchanged.forEach(function (row) { cveEl.appendChild(cveRowEl(row)); });
-    }
-  }
-
-  function appendGroupLabel(parent, text) {
-    const label = document.createElement('div');
-    label.className = 'cve-group-label';
-    label.textContent = text;
-    parent.appendChild(label);
+    (data.cves || []).forEach(function (row) {
+      cveEl.appendChild(cveRowEl(row));
+    });
   }
 
   function cveRowEl(row) {
     const div = document.createElement('div');
-    const unchanged = row.storyRole === 'UNCHANGED_PIN';
-    div.className = 'cve-row ' + (unchanged ? 'unchanged' : 'target');
+    const remediated = row.status === 'REMEDIATED';
+    div.className = 'cve-row ' + (remediated ? 'target' : 'unchanged');
     const url = row.nvdUrl || ('https://nvd.nist.gov/vuln/detail/' + row.cveId);
-    const roleLabel = unchanged ? 'pin unchanged' : (row.status === 'REMEDIATED' ? 'remediated after Stage 2 rebuild' : 'flips after Stage 2 rebuild');
     div.innerHTML =
       '<span class="chip ' + escapeHtml(row.status) + '">' + escapeHtml(row.status) + '</span>' +
       '<a class="cve-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
         escapeHtml(row.cveId) + '</a>' +
-      '<span class="lib">' + escapeHtml(row.library) + '</span>' +
-      '<span class="role-tag">' + escapeHtml(roleLabel) + '</span>';
+      '<span class="lib">' + escapeHtml(row.library) + '</span>';
     return div;
   }
 
